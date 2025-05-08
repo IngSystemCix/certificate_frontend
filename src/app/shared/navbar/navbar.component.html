@@ -1,0 +1,19 @@
+<nav class="w-full flex justify-between items-center bg-white shadow-md p-4">
+  <div class="flex items-center gap-4">
+    <i class="bi bi-menu-button text-2xl text-certificate-blue-600 hover:text-certificate-blue-700 cursor-pointer transition duration-300 ease-in-out block sm:block md:hidden" (click)="handleOpenMenu()"></i>
+    <img src="assets/logo.png" alt="Certificados" class="w-auto h-10" />
+  </div>
+  <div
+    class="flex items-center gap-2 p-2 border-2 border-gray-200 rounded-full"
+  >
+    <app-avatar
+      [username]="userName"
+      [width]="'w-10'"
+      [height]="'h-10'"
+      [fontSize]="'text-xl'"
+    />
+    <span class="text-gray-800 font-semibold mr-2 select-none"
+      >Bienvenido, {{ userName }}</span
+    >
+  </div>
+</nav>

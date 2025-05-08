@@ -1,0 +1,923 @@
+<!-- modal emmiter certificate -->
+<app-modal
+  [title]="titleModal"
+  [description]="descriptionModal"
+  [isOpen]="isOpenModalEmmiterCertificate"
+  (onClose)="isOpenModalEmmiterCertificate = false"
+>
+  <form class="w-full flex flex-col gap-4" [formGroup]="formEmmiterCertificate">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold">Tipo de documento</span>
+        <select
+          title="Seleccionar tipo de documento"
+          name="selectedDocumentType"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          required
+        >
+          <option
+            [ngValue]="null"
+            [selected]="selectedDocumentType === null"
+            disabled
+            class="text-slate-500 text-sm font-bold active:text-slate-500 disabled:text-slate-400"
+          >
+            Seleccionar tipo de documento
+          </option>
+          @for (item of documentTypes; track item) {
+            <option
+              title="{{ item.name }}"
+              [ngValue]="item.value"
+              [selected]="item.name === selectedDocumentType"
+              class="text-slate-500 text-sm font-bold px-3 py-2 hover:bg-certificate-blue-100 focus:bg-certificate-blue-100 focus:outline-none focus:border-certificate-blue-600 cursor-pointer"
+            >
+              {{ item.name }}
+            </option>
+          }
+        </select>
+        @if (
+          formEmmiterCertificate.get("selectedDocumentType")?.touched &&
+          formEmmiterCertificate.get("selectedDocumentType")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormEmmiterCertificate("selectedDocumentType") }}
+          </div>
+        }
+      </label>
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold"
+          >Número de documento</span
+        >
+        <input
+          title="Número de documento"
+          [(ngModel)]="documentNumber"
+          name="documentNumber"
+          [pattern]="documentNumberPattern"
+          (input)="handleInputDocumentNumber($event)"
+          (keydown)="preventNonNumericInput($event)"
+          formControlName="documentNumber"
+          type="text"
+          placeholder="Número de documento"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          autocomplete="off"
+          required
+        />
+        @if (
+          formEmmiterCertificate.get("documentNumber")?.touched &&
+          formEmmiterCertificate.get("documentNumber")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormEmmiterCertificate("documentNumber") }}
+          </div>
+        }
+      </label>
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold">Evento</span>
+        <select
+          title="Seleccionar evento"
+          name="selectedEvent"
+          formControlName="selectedEvent"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          required
+        >
+          <option
+            [ngValue]="'null'"
+            [selected]="selectedDocumentType === null"
+            disabled
+            class="text-slate-500 text-sm font-bold active:text-slate-500 disabled:text-slate-400"
+          >
+            Seleccionar tipo de documento
+          </option>
+          @for (item of events; track $index) {
+            <option
+              title="{{ item }}"
+              [ngValue]="item"
+              [selected]="item === selectedEvent"
+              class="text-slate-500 text-sm font-bold px-3 py-2 hover:bg-certificate-blue-100 focus:bg-certificate-blue-100 focus:outline-none focus:border-certificate-blue-600 cursor-pointer"
+            >
+              {{ item }}
+            </option>
+          }
+        </select>
+        @if (
+          formEmmiterCertificate.get("selectedEvent")?.touched &&
+          formEmmiterCertificate.get("selectedEvent")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormEmmiterCertificate("selectedEvent") }}
+          </div>
+        }
+      </label>
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold">Nota</span>
+        <input
+          title="Nota"
+          name="note"
+          type="number"
+          min="0"
+          max="20"
+          step="0.5"
+          placeholder="Nota"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          autocomplete="off"
+          required
+        />
+      </label>
+      @if (
+        formEmmiterCertificate.get("note")?.touched &&
+        formEmmiterCertificate.get("note")?.invalid
+      ) {
+        <div class="text-red-500 text-sm">
+          {{ getErrorMessageFormEmmiterCertificate("note") }}
+        </div>
+      }
+    </div>
+    <button
+      title="Emitir certificado"
+      type="button"
+      class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center justify-center gap-2 cursor-pointer transition duration-300 ease-in-out col-span-2"
+    >
+      <span>Emitir certificado</span>
+      <i class="bi bi-file-earmark-check"></i>
+    </button>
+  </form>
+</app-modal>
+
+<!-- modal create event -->
+
+<app-modal
+  [title]="titleModalCreateEvent"
+  [description]="descriptionModalCreateEvent"
+  [isOpen]="isOpenModalCreateEvent"
+  (onClose)="isOpenModalCreateEvent = false"
+>
+  @if (isVisbleFormEvent) {
+    <form
+      class="w-full h-96 flex flex-col gap-4 overflow-auto"
+      [formGroup]="formCreateEvent"
+    >
+      <div class="w-full flex flex-col gap-4">
+        <div class="w-full flex justify-between items-center">
+          <div class="flex gap-2">
+            <!-- Botón: Ver todos los eventos -->
+            <div class="group inline-block">
+              <button
+                title="Ver todos los eventos"
+                type="button"
+                class="bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 flex items-center gap-2 cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+                (click)="handleShowAllEvents()"
+              >
+                <span
+                  class="opacity-0 max-w-0 translate-x-4 group-hover:max-w-[160px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden"
+                >
+                  Ver todos los eventos
+                </span>
+                <i
+                  class="bi bi-eye text-2xl -translate-x-1 group-hover:translate-0"
+                ></i>
+              </button>
+            </div>
+
+            <!-- Botón: Crear tipo de evento -->
+            <div class="group inline-block">
+              <button
+                title="Crear tipo de evento"
+                type="button"
+                class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center gap-2 cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+                (click)="handleOpenModalCreateTypeEvent()"
+              >
+                <span
+                  class="opacity-0 max-w-0 translate-x-4 group-hover:max-w-[180px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden"
+                >
+                  Crear tipo de evento
+                </span>
+                <i
+                  class="bi bi-plus-circle text-2xl -translate-x-1 group-hover:translate-0"
+                ></i>
+              </button>
+            </div>
+
+            <!-- Botón: Limpiar formulario -->
+            <div class="group inline-block">
+              <button
+                title="Limpiar formulario"
+                type="button"
+                class="bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 flex items-center gap-2 cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+                (click)="handleCleanFormCreateEvent()"
+              >
+                <span
+                  class="opacity-0 max-w-0 translate-x-4 group-hover:max-w-[160px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden"
+                >
+                  Limpiar formulario
+                </span>
+                <i
+                  class="bi bi-x-circle text-2xl -translate-x-1 group-hover:translate-0"
+                ></i>
+              </button>
+            </div>
+          </div>
+          <label class="flex flex-col justify-center items-start gap-2">
+            <span class="text-slate-500 text-sm font-bold">Activar Evento</span>
+            <div class="flex justify-end items-center space-x-2">
+              <!-- Toggle -->
+              <label for="toggle" class="relative inline-block w-12 h-6">
+                <input
+                  title="Activar certificado"
+                  type="checkbox"
+                  id="toggle"
+                  name="isCertificateEnabled"
+                  class="opacity-0 w-0 h-0"
+                />
+                <span class="slider round bg-certificate-blue-600"></span>
+              </label>
+              <!-- Texto al lado del toggle -->
+              <span class="w-20 text-sm text-certificate-blue-600 font-bold">{{
+                isEventEnabled ? "Activado" : "Desactivado"
+              }}</span>
+            </div>
+          </label>
+        </div>
+        <div class="w-full flex flex-col gap-2">
+          <label class="w-full flex flex-col gap-2">
+            <span class="text-slate-500 text-sm font-bold"
+              >Nombre del evento</span
+            >
+            <input
+              title="Nombre del evento"
+              name="eventName"
+              formControlName="eventName"
+              type="text"
+              placeholder="Nombre del evento"
+              class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+              autocomplete="off"
+              required
+            />
+            @if (
+              formCreateEvent.get("eventName")?.touched &&
+              formCreateEvent.get("eventName")?.invalid
+            ) {
+              <div class="text-red-500 text-sm">
+                {{ getErrorMessageFormCreateEvent("eventName") }}
+              </div>
+            }
+          </label>
+          <label class="w-full flex flex-col gap-2">
+            <span class="text-slate-500 text-sm font-bold">Descripción</span>
+            <textarea
+              title="Descripción del evento"
+              name="eventDescription"
+              formControlName="eventDescription"
+              rows="4"
+              placeholder="Descripción del evento"
+              class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600 resize-none"
+              autocomplete="off"
+              required
+            ></textarea>
+            @if (
+              formCreateEvent.get("eventDescription")?.touched &&
+              formCreateEvent.get("eventDescription")?.invalid
+            ) {
+              <div class="text-red-500 text-sm">
+                {{ getErrorMessageFormCreateEvent("eventDescription") }}
+              </div>
+            }
+          </label>
+        </div>
+      </div>
+      <div class="max-w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="w-full flex flex-col gap-2">
+          <span class="text-slate-500 text-sm font-bold">Fecha de inicio</span>
+          <input
+            title="Fecha de inicio del evento"
+            name="eventStartDate"
+            formControlName="eventStartDate"
+            type="datetime-local"
+            [min]="minStartDate"
+            (change)="updateEndMinDate()"
+            placeholder="Fecha de inicio del evento"
+            class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+            autocomplete="off"
+            required
+          />
+          @if (
+            formCreateEvent.get("eventStartDate")?.touched &&
+            formCreateEvent.get("eventStartDate")?.invalid
+          ) {
+            <div class="text-red-500 text-sm">
+              {{ getErrorMessageFormCreateEvent("eventStartDate") }}
+            </div>
+          }
+        </label>
+        <label class="w-full flex flex-col gap-2">
+          <span class="text-slate-500 text-sm font-bold">Fecha de fin</span>
+          <input
+            title="Fecha de fin del evento"
+            name="eventEndDate"
+            formControlName="eventEndDate"
+            type="datetime-local"
+            [min]="minEndDate"
+            placeholder="Fecha de fin del evento"
+            class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+            autocomplete="off"
+            required
+          />
+          @if (
+            formCreateEvent.get("eventEndDate")?.touched &&
+            formCreateEvent.get("eventEndDate")?.invalid
+          ) {
+            <div class="text-red-500 text-sm">
+              {{ getErrorMessageFormCreateEvent("eventEndDate") }}
+            </div>
+          }
+        </label>
+        <label class="w-full flex flex-col gap-2">
+          <span class="text-slate-500 text-sm font-bold">Número de horas</span>
+          <input
+            title="Número de horas del evento"
+            name="eventHours"
+            formControlName="eventHours"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="Número de horas del evento"
+            class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+            autocomplete="off"
+            required
+          />
+          @if (
+            formCreateEvent.get("eventHours")?.touched &&
+            formCreateEvent.get("eventHours")?.invalid
+          ) {
+            <div class="text-red-500 text-sm">
+              {{ getErrorMessageFormCreateEvent("eventHours") }}
+            </div>
+          }
+        </label>
+
+        <label class="w-full flex flex-col gap-2">
+          <span class="text-slate-500 text-sm font-bold">Tipo de evento</span>
+          <select
+            title="Seleccionar tipo de evento"
+            name="selectedTypeEvent"
+            formControlName="selectedTypeEvent"
+            class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+            required
+          >
+            <option
+              [ngValue]="'null'"
+              [selected]="selectedTypeEvent === 'null'"
+              disabled
+              class="text-slate-500 text-sm font-bold active:text-slate-500 disabled:text-slate-400"
+            >
+              Seleccionar tipo de evento
+            </option>
+            @for (item of typeEvents; track item) {
+              <option
+                title="{{ item }}"
+                [ngValue]="item"
+                [selected]="item === selectedTypeEvent"
+                class="text-slate-500 text-sm font-bold px-3 py-2 hover:bg-certificate-blue-100 focus:bg-certificate-blue-100 focus:outline-none focus:border-certificate-blue-600 cursor-pointer"
+              >
+                {{ item }}
+              </option>
+            }
+          </select>
+          @if (
+            formCreateEvent.get("selectedTypeEvent")?.touched &&
+            formCreateEvent.get("selectedTypeEvent")?.invalid
+          ) {
+            <div class="text-red-500 text-sm">
+              {{ getErrorMessageFormCreateEvent("selectedTypeEvent") }}
+            </div>
+          }
+        </label>
+
+        <label class="w-full flex flex-col gap-2">
+          <span class="text-slate-500 text-sm font-bold">Modalidad</span>
+          <select
+            title="Seleccionar modalidad"
+            name="selectedModeEvent"
+            formControlName="selectedModeEvent"
+            class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+            required
+          >
+            <option
+              [ngValue]="'null'"
+              [selected]="selectedModeEvent === 'null'"
+              disabled
+              class="text-slate-500 text-sm font-bold active:text-slate-500 disabled:text-slate-400"
+            >
+              Seleccionar modalidad
+            </option>
+            @for (item of modeEvents; track item) {
+              <option
+                title="{{ item }}"
+                [ngValue]="item"
+                [selected]="item === selectedModeEvent"
+                class="text-slate-500 text-sm font-bold px-3 py-2 hover:bg-certificate-blue-100 focus:bg-certificate-blue-100 focus:outline-none focus:border-certificate-blue-600 cursor-pointer"
+              >
+                {{ item }}
+              </option>
+            }
+          </select>
+          @if (
+            formCreateEvent.get("selectedModeEvent")?.touched &&
+            formCreateEvent.get("selectedModeEvent")?.invalid
+          ) {
+            <div class="text-red-500 text-sm">
+              {{ getErrorMessageFormCreateEvent("selectedModeEvent") }}
+            </div>
+          }
+        </label>
+
+        <label class="w-full flex flex-col gap-2">
+          <span class="text-slate-500 text-sm font-bold">Ubicación</span>
+          <input
+            title="Ubicación del evento"
+            name="eventLocation"
+            formControlName="eventLocation"
+            type="text"
+            placeholder="Ubicación del evento"
+            class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+            autocomplete="off"
+            required
+          />
+          @if (
+            formCreateEvent.get("eventLocation")?.touched &&
+            formCreateEvent.get("eventLocation")?.invalid
+          ) {
+            <div class="text-red-500 text-sm">
+              {{ getErrorMessageFormCreateEvent("eventLocation") }}
+            </div>
+          }
+        </label>
+      </div>
+      <button
+        title="Crear evento"
+        type="button"
+        class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center justify-center gap-2 cursor-pointer transition duration-300 ease-in-out col-span-2"
+      >
+        <span>Crear evento</span>
+        <i class="bi bi-calendar-plus"></i>
+      </button>
+    </form>
+  } @else if (isShowAllEvents) {
+    <div class="w-full flex justify-between items-center">
+      <button
+        title="Atrás"
+        type="button"
+        class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center justify-center gap-2 cursor-pointer transition duration-300 ease-in-out group"
+        (click)="handleShowAllEvents()"
+      >
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div class="relative">
+        <input
+          #searchInputEvent
+          title="Buscar evento por nombre del evento o código o ubicación"
+          [(ngModel)]="searchEvent"
+          name="search"
+          type="text"
+          placeholder="Buscar evento por nombre del evento o código o ubicación"
+          class="w-full sm:w-full md:w-[29rem] border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600 pr-12"
+          autocomplete="off"
+          (change)="handleSearchEvent(searchInputEvent.value)"
+          required
+        />
+
+        <!-- Icono de la "x", solo visible cuando hay texto en el campo -->
+        @if (searchEvent) {
+          <button
+            title="Limpiar búsqueda"
+            type="button"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+            (click)="clearSearchEvent()"
+          >
+            <i class="bi bi-x-circle text-2xl"></i>
+            <!-- Usando el ícono 'x' -->
+          </button>
+        }
+      </div>
+    </div>
+    <app-table
+      [headers]="headersEvent"
+      [data]="formattedDataEvent"
+      [search]="searchEvent"
+      [selectedColumnSearch]="selectedColumnSearchEvent"
+      [minWidth]="minWidthEvent"
+      [itemsCombobox]="optionsCombobox"
+      [isModal]="true"
+    />
+  } @else {
+    <form class="w-full flex flex-col gap-4" [formGroup]="formTypeEvent">
+      <div class="w-full flex items-center justify-between gap-4">
+        <div class="group inline-block">
+          <button
+            title="Ver todos los tipos de eventos"
+            type="button"
+            class="bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 flex items-center gap-2 cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+          >
+            <span
+              class="opacity-0 max-w-0 translate-x-4 group-hover:max-w-[230px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden"
+            >
+              Ver todos los tipos de eventos
+            </span>
+            <i
+              class="bi bi-eye text-2xl -translate-x-1 group-hover:translate-0"
+            ></i>
+          </button>
+        </div>
+
+        <label class="flex flex-col justify-center items-end gap-2">
+          <span class="text-slate-500 text-sm font-bold"
+            >Vigencia del tipo de evento</span
+          >
+          <div class="flex justify-end items-center space-x-2">
+            <!-- Toggle -->
+            <label for="toggle" class="relative inline-block w-12 h-6">
+              <input
+                title="Activar certificado"
+                type="checkbox"
+                id="toggle"
+                name="isCertificateEnabled"
+                class="opacity-0 w-0 h-0"
+              />
+              <span class="slider round bg-certificate-blue-600"></span>
+            </label>
+            <!-- Texto al lado del toggle -->
+            <span class="w-20 text-sm text-certificate-blue-600 font-bold">{{
+              isInForceTypeEvent ? "Activado" : "Desactivado"
+            }}</span>
+          </div>
+        </label>
+      </div>
+      <!-- nombre del tipo de evento -->
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold"
+          >Nombre del tipo de evento</span
+        >
+        <input
+          title="Nombre del tipo de evento"
+          name="typeEventName"
+          formControlName="typeEventName"
+          type="text"
+          placeholder="Nombre del tipo de evento"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          autocomplete="off"
+          required
+        />
+        @if (
+          formTypeEvent.get("typeEventName")?.touched &&
+          formTypeEvent.get("typeEventName")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormTypeEvent("typeEventName") }}
+          </div>
+        }
+      </label>
+      <!-- descripción del tipo de evento -->
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold">Descripción</span>
+        <textarea
+          title="Descripción del tipo de evento"
+          name="typeEventDescription"
+          formControlName="typeEventDescription"
+          rows="4"
+          placeholder="Descripción del tipo de evento"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600 resize-none"
+          autocomplete="off"
+          required
+        ></textarea>
+        @if (
+          formTypeEvent.get("typeEventDescription")?.touched &&
+          formTypeEvent.get("typeEventDescription")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormTypeEvent("typeEventDescription") }}
+          </div>
+        }
+      </label>
+      <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button
+          title="Crear tipo de evento"
+          type="button"
+          class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center justify-center gap-2 cursor-pointer transition duration-300 ease-in-out"
+        >
+          <i class="bi bi-calendar-plus"></i>
+          <span>Crear tipo de evento</span>
+        </button>
+        <button
+          title="Cancelar"
+          type="button"
+          class="bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 flex items-center justify-center gap-2 cursor-pointer transition duration-300 ease-in-out"
+          (click)="handleBackModalCreateEvent()"
+        >
+          <i class="bi bi-x-circle"></i>
+          <span>Cancelar</span>
+        </button>
+      </div>
+    </form>
+  }
+</app-modal>
+
+<!-- modal add participant -->
+
+<app-modal
+  [title]="titleModalAddParticipant"
+  [description]="descriptionModalAddParticipant"
+  [isOpen]="isOpenModalAddParticipant"
+  (onClose)="isOpenModalAddParticipant = false"
+>
+  <form class="w-full flex flex-col gap-4" [formGroup]="formAddParticipant">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold">Tipo de documento</span>
+        <select
+          title="Seleccionar tipo de documento"
+          name="participantTypeDocument"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          required
+        >
+          <option
+            [ngValue]="null"
+            [selected]="participantTypeDocument === null"
+            disabled
+            class="text-slate-500 text-sm font-bold active:text-slate-500 disabled:text-slate-400"
+          >
+            Seleccionar tipo de documento
+          </option>
+          @for (item of participantDocumentTypes; track item) {
+            <option
+              title="{{ item.name }}"
+              [ngValue]="item.value"
+              [selected]="item.name === participantTypeDocument"
+              class="text-slate-500 text-sm font-bold px-3 py-2 hover:bg-certificate-blue-100 focus:bg-certificate-blue-100 focus:outline-none focus:border-certificate-blue-600 cursor-pointer"
+            >
+              {{ item.name }}
+            </option>
+          }
+        </select>
+        @if (
+          formAddParticipant.get("participantTypeDocument")?.touched &&
+          formAddParticipant.get("participantTypeDocument")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormAddParticipant("participantTypeDocument") }}
+          </div>
+        }
+      </label>
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold"
+          >Número de documento</span
+        >
+        <input
+          title="Número de documento"
+          [(ngModel)]="documentNumber"
+          name="participantDocumentNumber"
+          [pattern]="documentNumberPattern"
+          (input)="handleInputDocumentNumber($event)"
+          (keydown)="preventNonNumericInput($event)"
+          formControlName="participantDocumentNumber"
+          type="text"
+          placeholder="Número de documento"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          autocomplete="off"
+          required
+        />
+        @if (
+          formAddParticipant.get("participantDocumentNumber")?.touched &&
+          formAddParticipant.get("participantDocumentNumber")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormAddParticipant("participantDocumentNumber") }}
+          </div>
+        }
+      </label>
+      <label class="w-full flex flex-col gap-2 col-span-1 md:col-span-2">
+        <span class="text-slate-500 text-sm font-bold">Nombre</span>
+        <input
+          title="Nombre del participante"
+          name="participantName"
+          formControlName="participantName"
+          type="text"
+          placeholder="Nombre del participante"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          autocomplete="off"
+          required
+        />
+        @if (
+          formAddParticipant.get("participantName")?.touched &&
+          formAddParticipant.get("participantName")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormAddParticipant("participantName") }}
+          </div>
+        }
+      </label>
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold">Apellido Paterno</span>
+        <input
+          title="Apellido paterno del participante"
+          name="participantPaternalSurname"
+          formControlName="participantPaternalSurname"
+          type="text"
+          placeholder="Apellido paterno del participante"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          autocomplete="off"
+          required
+        />
+        @if (
+          formAddParticipant.get("participantPaternalSurname")?.touched &&
+          formAddParticipant.get("participantPaternalSurname")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{
+              getErrorMessageFormAddParticipant("participantPaternalSurname")
+            }}
+          </div>
+        }
+      </label>
+      <label class="w-full flex flex-col gap-2">
+        <span class="text-slate-500 text-sm font-bold">Apellido Materno</span>
+        <input
+          title="Apellido materno del participante"
+          name="participantMaternalSurname"
+          formControlName="participantMaternalSurname"
+          type="text"
+          placeholder="Apellido materno del participante"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          autocomplete="off"
+          required
+        />
+        @if (
+          formAddParticipant.get("participantMaternalSurname")?.touched &&
+          formAddParticipant.get("participantMaternalSurname")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{
+              getErrorMessageFormAddParticipant("participantMaternalSurname")
+            }}
+          </div>
+        }
+      </label>
+      <label class="w-full flex flex-col gap-2 col-span-1 md:col-span-2">
+        <span class="text-slate-500 text-sm font-bold">Correo electrónico</span>
+        <input
+          title="Correo electrónico del participante"
+          name="participantEmail"
+          formControlName="participantEmail"
+          type="email"
+          placeholder="Correo electrónico del participante"
+          class="w-full border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600"
+          autocomplete="off"
+          required
+        />
+        @if (
+          formAddParticipant.get("participantEmail")?.touched &&
+          formAddParticipant.get("participantEmail")?.invalid
+        ) {
+          <div class="text-red-500 text-sm">
+            {{ getErrorMessageFormAddParticipant("participantEmail") }}
+          </div>
+        }
+      </label>
+    </div>
+    <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+      <button
+        title="Ver todos los participantes"
+        type="button"
+        class="bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 flex items-center justify-center gap-2 cursor-pointer transition duration-300 ease-in-out"
+      >
+        <i class="bi bi-eye"></i>
+        <span>Ver todos los participantes</span>
+      </button>
+
+      <button
+        title="Agregar participante"
+        type="button"
+        class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center justify-center gap-2 cursor-pointer transition duration-300 ease-in-out"
+      >
+        <i class="bi bi-person-plus"></i>
+        <span>Agregar participante</span>
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- content dashboard -->
+
+<div class="w-full">
+  <app-navbar [(isOpen)]="isOpen" />
+
+  <div class="w-full flex">
+    <app-sidebar [(isOpen)]="isOpen" />
+
+    <div class="w-full h-[calc(100lvh-6.3rem)] p-6 flex flex-col">
+      <!-- Encabezado y acciones -->
+      <div
+        class="w-full flex flex-col md:flex-row justify-between items-end sm:items-end md:items-center gap-4 md:gap-6 mb-6"
+      >
+        <!-- Búsqueda de certificados -->
+        <div class="flex flex-col w-full md:w-auto items-start gap-2">
+          <label class="text-slate-500 text-2xl font-bold">
+            Certificados
+          </label>
+          <div class="relative w-full">
+            <input
+              #searchInput
+              title="Buscar certificados por nombre del participante o código"
+              [(ngModel)]="search"
+              name="search"
+              type="text"
+              placeholder="Buscar certificados por nombre del participante o código"
+              class="w-full sm:w-full md:w-[29rem] border-2 border-certificate-blue-100 rounded-md px-3 py-2 focus:outline-none focus:border-certificate-blue-600 pr-12"
+              autocomplete="off"
+              (change)="handleSearch(searchInput.value)"
+              required
+            />
+
+            <!-- Icono de la "x", solo visible cuando hay texto en el campo -->
+            @if (search) {
+              <button
+                title="Limpiar búsqueda"
+                type="button"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                (click)="clearSearch()"
+              >
+                <i class="bi bi-x-circle text-2xl"></i>
+                <!-- Usando el ícono 'x' -->
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="flex w-full md:w-auto items-center justify-center gap-2">
+          <!-- Contenedor con "group" (ahora el hover aplica al div, no al botón) -->
+          <div class="group inline-block">
+            <button
+              title="Crear evento"
+              type="button"
+              class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center gap-2 cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+              (click)="handleOpenModalCreateEvent()"
+            >
+              <span
+                class="opacity-0 max-w-0 translate-x-4 group-hover:max-w-[100px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden"
+              >
+                Crear evento
+              </span>
+              <i
+                class="bi bi-calendar-plus text-2xl -translate-x-1 group-hover:translate-0"
+              ></i>
+            </button>
+          </div>
+
+          <!-- Botón: Agregar participante -->
+          <div class="group inline-block">
+            <button
+              title="Agregar participante"
+              type="button"
+              class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center gap-2 cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+              (click)="handleOpenModalAddParticipant()"
+            >
+              <span
+                class="opacity-0 max-w-0 translate-x-4 group-hover:max-w-[160px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden"
+              >
+                Agregar participante
+              </span>
+              <i
+                class="bi bi-person-plus text-2xl -translate-x-1 group-hover:translate-0"
+              ></i>
+            </button>
+          </div>
+
+          <!-- Botón: Emitir certificado -->
+          <div class="group inline-block">
+            <button
+              title="Emitir certificado"
+              type="button"
+              class="bg-certificate-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-certificate-blue-600 focus:outline-none focus:ring-2 focus:ring-certificate-blue-600 focus:ring-opacity-50 flex items-center gap-2 cursor-pointer transition-all duration-300 ease-in-out overflow-hidden"
+              (click)="handleOpenModalEmmiterCertificate()"
+            >
+              <span
+                class="opacity-0 max-w-0 translate-x-4 group-hover:max-w-[150px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden"
+              >
+                Emitir certificado
+              </span>
+              <i
+                class="bi bi-file-earmark-check text-2xl -translate-x-1 group-hover:translate-0"
+              ></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de certificados emitidos -->
+      <app-table
+        [headers]="headers"
+        [data]="data"
+        [search]="search"
+        [selectedColumnSearch]="selectedColumnSearch"
+        [isModal]="false"
+      />
+    </div>
+  </div>
+</div>

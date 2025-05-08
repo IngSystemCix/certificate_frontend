@@ -1,0 +1,10 @@
+<div
+  class="fixed w-52 sm:w-52 lg:w-96 z-50 bg-white shadow-lg rounded-lg p-4 transition-all duration-300 ease-in-out text-wrap"
+  [ngClass]="{
+    'top-4 right-0 text-right': position === MessagePosition.TOP_RIGHT,
+    'top-4 left-0 text-left': position === MessagePosition.TOP_LEFT,
+    'bottom-4 right-0 text-right': position === MessagePosition.BOTTOM_RIGHT,
+    'bottom-4 left-0 text-left': position === MessagePosition.BOTTOM_LEFT
+  }">
+  {{ message }}
+</div>
