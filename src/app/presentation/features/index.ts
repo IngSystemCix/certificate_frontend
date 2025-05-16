@@ -1,0 +1,5 @@
+export * from "./login/login.component"
+export * from "./not-found/not-found.component"
+export * from "./home/home.component"
+export * from "./add-user/add-user.component"
+export * from "./certificate/certificate.component"

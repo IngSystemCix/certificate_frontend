@@ -1,0 +1,123 @@
+<div
+  class="absolute top-4 right-4 left-4 md:left-auto w-auto max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl flex flex-col space-y-4 z-10"
+>
+  @if (isMessageInfo) {
+    <p-message
+      icon="pi pi-info-circle"
+      severity="info"
+      size="small"
+      text="Se ha reenviado un código de validación a tu correo"
+      closable
+    />
+  }
+  @if (isMessageSuccess) {
+    <p-message
+      icon="pi pi-check"
+      severity="success"
+      size="small"
+      text="Tu correo es válido"
+      closable
+    />
+    <p-message
+      icon="pi pi-info-circle"
+      severity="info"
+      size="small"
+      text="Se ha enviado un código de validación a tu correo"
+      closable
+    />
+  }
+</div>
+
+<div
+  class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl w-full max-w-2xl shadow-2xl p-6 border-2 border-gray-200 flex flex-col space-y-4"
+>
+  <img src="/assets/logo.png" alt="certificate" class="w-1/2 mx-auto" />
+  <span class="text-certificate-blue-100 w-full text-center"
+    >Ingresa un correo para poder emitir certificados</span
+  >
+  <form
+    (submit)="onSubmitAuth($event)"
+    method="post"
+    class="w-full flex flex-col space-y-5"
+    (keydown.enter)="lockEnter($event)"
+    noValidate
+  >
+    @if (isShowViewFormEmail) {
+      <label class="w-full flex flex-col space-y-3">
+        <span class="text-certificate-blue-600 font-bold"
+          >Correo electrónico</span
+        >
+        <input
+          #inputEmail
+          type="text"
+          class="input-normal px-3 py-4"
+          placeholder="example@certificate.com"
+          (input)="onChangeContinue(inputEmail.value)"
+          (keydown.enter)="onClickContinue(inputEmail.value)"
+          autoComplete="off"
+          required
+        />
+      </label>
+      <button
+        type="button"
+        class="button-normal"
+        [disabled]="isButtonContinueDisabled"
+        (click)="onClickContinue(inputEmail.value)"
+      >
+        <span>Continuar</span>
+        <i class="bi bi-arrow-right"></i>
+      </button>
+    } @else {
+      <div class="w-full flex space-x-2">
+        @for (input of lengthCode; track $index) {
+          <input
+            #codeInput
+            type="text"
+            class="input-normal p-2 aspect-square text-4xl font-bold text-center"
+            maxlength="1"
+            name="code-{{ $index }}"
+            (input)="onChangeCode(codeInput, $index)"
+            (keydown.backspace)="onChangeCodeBackspace(codeInput, $index)"
+            required
+          />
+        }
+      </div>
+      <button type="submit" class="button-normal">
+        <span>Verificar</span>
+        <i class="bi bi-patch-check"></i>
+      </button>
+      <div
+        class="w-full flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-2"
+      >
+        <button
+          type="button"
+          class="button-outline"
+          (click)="onClickResendCode()"
+          [disabled]="isButtonResendCodeDisabled"
+        >
+          <span>{{ buttonResendCodeText }}</span>
+          @if (isButtonResendCodeDisabled) {
+            <i class="bi bi-clock"></i>
+          } @else {
+            <i class="bi bi-arrow-clockwise"></i>
+          }
+        </button>
+        <button class="button-outline" (click)="onClickBack()">
+          <span>Regresar</span>
+          <i class="bi bi-arrow-left"></i>
+        </button>
+      </div>
+    }
+  </form>
+  <div class="w-full flex justify-center items-center space-x-2">
+    <i class="bi bi-shield-check text-certificate-blue-100"></i>
+    <span class="text-certificate-blue-100 text-sm"
+      >Tu información está segura</span
+    >
+  </div>
+</div>
+
+<span
+  class="absolute bottom-4 left-1/2 -translate-x-1/2 text-certificate-blue-100 font-semibold text-sm text-nowrap"
+  >&copy; {{ yearNow }} certificate. Todos los derechos reservados.</span
+>

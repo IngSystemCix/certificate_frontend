@@ -1,0 +1,26 @@
+<nav
+  class="w-full bg-white shadow-md flex justify-between items-center px-3 py-4"
+>
+  <div class="flex items-center space-x-2">
+    <i
+      class="bi bi-menu-button-wide text-certificate-blue-600 hover:text-certificate-blue-700 text-4xl cursor-pointer transition-all duration-300 hover:animate-pulse block md:hidden"
+      (click)="handleSidebarToggle()"
+    ></i>
+    <img src="/assets/logo.png" alt="logo de certificate" class="h-16 w-auto" />
+  </div>
+  <div class="p-2 flex justify-center items-center space-x-2">
+    <p-avatar
+      [label]="usernameInitials"
+      size="large"
+      class="select-none"
+      [style]="{
+        'background-color': generateColorHSLA(username),
+        color: '#fff',
+      }"
+    />
+    <span
+      class="text-certificate-blue-600 font-bold select-none hidden md:block"
+      >Bienvenido, {{ username }}</span
+    >
+  </div>
+</nav>

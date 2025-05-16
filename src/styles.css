@@ -1,7 +1,53 @@
 /* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@import "primeicons/primeicons.css";
+
+* {
+  --p-paginator-nav-button-selected-background: #2c2f4a !important;
+  --p-paginator-nav-button-selected-color: #ffffff !important;
+  --p-button-outlined-primary-border-color: #2c2f4a !important;
+  --p-button-outlined-primary-color: #2c2f4a !important;
+  --p-button-primary-background: #2c2f4a !important;
+  --p-button-primary-border-color: #2c2f4a !important;
+}
 
 @theme {
+  --color-certificate-blue-50: #f5f7ff;
   --color-certificate-blue-100: #8c94a9;
+  --color-certificate-blue-200: #7b839c;
   --color-certificate-blue-600: #2c2f4a;
+  --color-certificate-blue-700: #1f2234;
+}
+
+@layer components {
+  .button-normal {
+    @apply w-full bg-certificate-blue-600 text-white font-bold py-4 rounded-lg hover:bg-certificate-blue-700 transition duration-200 cursor-pointer flex justify-center items-center space-x-2 active:bg-certificate-blue-600 active:hover:bg-certificate-blue-700 active:text-white disabled:bg-certificate-blue-100 disabled:hover:bg-certificate-blue-200 disabled:cursor-not-allowed;
+  }
+  .button-outline {
+    @apply w-full bg-transparent text-certificate-blue-600 font-bold py-4 rounded-lg border-2 border-certificate-blue-600 hover:bg-certificate-blue-600 hover:text-white transition duration-200 cursor-pointer flex justify-center items-center space-x-2 active:bg-certificate-blue-600 active:hover:bg-certificate-blue-700 active:text-white disabled:text-certificate-blue-200 disabled:bg-certificate-blue-50 disabled:hover:bg-gray-100 disabled:cursor-not-allowed;
+  }
+  .input-normal {
+    @apply w-full text-certificate-blue-600 rounded-lg outline-none ring-certificate-blue-600 border-2 border-certificate-blue-600;
+  }
+}
+
+.dot-matrix {
+  width: 6rem; /* equivalente a size-24 */
+  height: 6rem;
+  background-color: transparent;
+  background-image: radial-gradient(#2c2f4a 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+
+.striped-square {
+  width: 6rem;
+  height: 6rem;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    #7b839c 5px,
+    transparent 5px,
+    transparent 10px
+  );
 }

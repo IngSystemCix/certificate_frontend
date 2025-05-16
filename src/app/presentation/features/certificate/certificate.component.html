@@ -1,0 +1,65 @@
+<app-navbar [(isOpen)]="isOpen" />
+
+<div class="w-full h-[calc(100vh-96px)] flex">
+  <app-sidebar [(isOpen)]="isOpen" />
+  <div class="flex-grow p-6 overflow-auto">
+    <div class="flex items-center justify-between space-y-4 w-full">
+      <h1 class="text-4xl font-bold text-certificate-blue-600">Certificado</h1>
+      <button type="button" class="button-normal w-auto px-3">
+        <i class="bi bi-file-earmark-pdf"></i>
+        <span class="text-white text-lg font-bold hidden md:block"
+          >Descargar</span
+        >
+      </button>
+    </div>
+    <div
+      class="w-full h-[calc(100lvh-14rem)] overflow-hidden mt-4 overflow-x-auto overflow-y-auto"
+    >
+      <div
+        class="relative w-[400vw] md:w-[100vw] h-screen flex items-center justify-center space-x-4 overflow-hidden pointer-events-none select-none"
+      >
+        <div
+          class="absolute -top-52 left-72 size-96 bg-certificate-blue-600 rotate-45"
+        >
+          <div
+            class="absolute top-8 left-1/2 -translate-x-1/2 size-64 bg-white"
+          ></div>
+        </div>
+
+        <div
+          class="absolute -top-[10.1rem] -left-52 size-96 bg-certificate-blue-200 rotate-45"
+        >
+          <div class="dot-matrix absolute size-64 top-8 left-96"></div>
+        </div>
+
+        <div
+          class="absolute -top-[8rem] -right-52 size-96 bg-certificate-blue-200 rotate-45"
+        >
+          <div
+            class="absolute top-8 left-1/2 -translate-x-1/2 size-64 bg-white"
+          ></div>
+        </div>
+
+        <div
+          class="absolute top-24 right-24 size-32 bg-certificate-blue-600 rotate-45"
+        >
+          <div
+            class="striped-square absolute top-24 -right-4 size-24 rotate-45"
+          ></div>
+        </div>
+
+        <div
+          class="absolute top-64 -right-40 size-72 bg-certificate-blue-600 rotate-45"
+        >
+          <div class="absolute -top-8 -right-10 size-64 bg-white"></div>
+        </div>
+
+        <div
+          class="absolute -bottom-64 right-36 size-96 bg-certificate-blue-600 rotate-45"
+        ></div>
+
+        <!-- DATA -->
+      </div>
+    </div>
+  </div>
+</div>

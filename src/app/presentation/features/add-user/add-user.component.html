@@ -1,0 +1,189 @@
+<app-navbar [(isOpen)]="isOpen" />
+
+<div class="w-full h-[calc(100vh-96px)] flex">
+  <app-sidebar [(isOpen)]="isOpen" />
+  <div class="flex-grow p-6 overflow-auto">
+    <div class="flex flex-col items-start justify-center space-y-4 w-full">
+      <h1 class="text-4xl font-bold text-certificate-blue-600">
+        Agregar nuevo usuario
+      </h1>
+    </div>
+    <div class="w-full flex items-center justify-center space-x-4 mt-4">
+      <form
+        method="post"
+        [formGroup]="formAddUser"
+        class="w-full grid grid-cols-1 md:grid-cols-2 mt-4 gap-6 items-start"
+      >
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-2xl font-bold text-certificate-blue-600">
+            Tipo de documento
+          </span>
+          <select
+            name="documentType"
+            formControlName="documentType"
+            class="input-normal p-3"
+            required
+          >
+            @for (item of selectDocumentType; track item) {
+              <option [value]="item.value">{{ item.label }}</option>
+            }
+          </select>
+          @if (
+            formAddUser.get("documentType")?.invalid &&
+            formAddUser.get("documentType")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("documentType") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-2xl font-bold text-certificate-blue-600">
+            Número de documento
+          </span>
+          <input
+            type="text"
+            name="documentNumber"
+            formControlName="documentNumber"
+            class="input-normal p-3"
+            required
+          />
+          @if (
+            formAddUser.get("documentNumber")?.invalid &&
+            formAddUser.get("documentNumber")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("documentNumber") }}
+            </span>
+          }
+        </label>
+        <label
+          class="col-span-1 md:col-span-2 w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-2xl font-bold text-certificate-blue-600">
+            Nombre
+          </span>
+          <input
+            type="text"
+            name="name"
+            formControlName="name"
+            class="input-normal p-3"
+            required
+          />
+          @if (
+            formAddUser.get("name")?.invalid && formAddUser.get("name")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("name") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-2xl font-bold text-certificate-blue-600">
+            Apellido Paterno
+          </span>
+          <input
+            type="text"
+            name="lastName"
+            formControlName="lastName"
+            class="input-normal p-3"
+            required
+          />
+          @if (
+            formAddUser.get("lastName")?.invalid &&
+            formAddUser.get("lastName")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("lastName") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-2xl font-bold text-certificate-blue-600">
+            Apellido Materno
+          </span>
+          <input
+            type="text"
+            name="maternalSurname"
+            formControlName="maternalSurname"
+            class="input-normal p-3"
+            required
+          />
+          @if (
+            formAddUser.get("maternalSurname")?.invalid &&
+            formAddUser.get("maternalSurname")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("maternalSurname") }}
+            </span>
+          }
+        </label>
+        <label
+          class="col-span-1 md:col-span-2 w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-2xl font-bold text-certificate-blue-600">
+            Correo
+          </span>
+          <input
+            type="email"
+            name="email"
+            formControlName="email"
+            class="input-normal p-3"
+            required
+          />
+          @if (
+            formAddUser.get("email")?.invalid &&
+            formAddUser.get("email")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("email") }}
+            </span>
+          }
+        </label>
+        <label
+          class="col-span-1 md:col-span-2 w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-2xl font-bold text-certificate-blue-600">
+            Tipo de usuario
+          </span>
+          <select
+            name="userType"
+            formControlName="userType"
+            class="input-normal p-3"
+            required
+          >
+            @for (item of selectUserType; track item) {
+              <option [value]="item">
+                {{ item === "PE" ? "PERSONAL" : "PARTICIPANTE" }}
+              </option>
+            }
+          </select>
+          @if (
+            formAddUser.get("userType")?.invalid &&
+            formAddUser.get("userType")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("userType") }}
+            </span>
+          }
+        </label>
+        <button
+          type="submit"
+          class="col-span-1 md:col-span-2 button-normal"
+          [disabled]="formAddUser.invalid"
+        >
+          <i class="bi bi-plus-circle"></i>
+          <span class="ml-2">Agregar usuario</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1002 @@
+<div
+  class="absolute top-4 right-4 left-4 md:left-auto w-auto max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl flex flex-col space-y-4 z-[99999999]"
+>
+  @for (msg of messages(); track msg.id) {
+    <p-message
+      [icon]="getIcon(msg.severity)"
+      [severity]="msg.severity"
+      [text]="msg.content"
+      size="small"
+      closable
+    />
+  }
+</div>
+
+<p-dialog
+  header="{{ titleModalCreateEvent }}"
+  [(visible)]="isVisibleFormCreateEvent"
+  [modal]="true"
+  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+  [style]="{ width: '50vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  maskStyleClass="backdrop-blur-sm"
+>
+  @if (!isVisibleFormEventType && !isVisibleTableSeeAllEvents) {
+    <div
+      class="flex items-center justify-end space-x-4 border-b-2 border-certificate-blue-600 pb-4"
+    >
+      <button
+        type="button"
+        class="button-normal w-auto px-3 py-2 bg-green-400 text-certificate-blue-600 text-2xl"
+        (click)="onClickSeeAllEvents()"
+      >
+        <i class="bi bi-eye"></i>
+      </button>
+      <button
+        type="button"
+        class="button-normal w-auto px-3 py-2 bg-red-400 text-certificate-blue-600 text-2xl"
+        (click)="onClickCleanForm()"
+      >
+        <i class="bi bi-eraser"></i>
+      </button>
+    </div>
+    <div class="w-full h-96 overflow-hidden overflow-y-scroll p-4">
+      <form
+        method="post"
+        class="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4 items-start"
+        [formGroup]="formCreatedEvent"
+      >
+        <label
+          class="w-full col-span-1 md:col-span-2 flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-certificate-blue-600 text-2xl font-bold"
+            >Nombre del evento</span
+          >
+          <input
+            type="text"
+            formControlName="eventName"
+            class="input-normal p-3"
+            placeholder="Nombre del evento"
+          />
+          @if (
+            formCreatedEvent.get("eventName")?.invalid &&
+            formCreatedEvent.get("eventName")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("eventName") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full col-span-1 md:col-span-2 flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-certificate-blue-600 text-2xl font-bold"
+            >Descripción del evento</span
+          >
+          <textarea
+            formControlName="eventDescription"
+            class="input-normal h-48 p-3 resize-none"
+            placeholder="Descripción del evento"
+          ></textarea>
+          @if (
+            formCreatedEvent.get("eventDescription")?.invalid &&
+            formCreatedEvent.get("eventDescription")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("eventDescription") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-certificate-blue-600 text-2xl font-bold"
+            >Fecha de inicio</span
+          >
+          <input
+            type="datetime-local"
+            formControlName="eventStartDate"
+            class="input-normal p-3"
+            placeholder="Fecha de inicio"
+          />
+          @if (
+            formCreatedEvent.get("eventStartDate")?.invalid &&
+            formCreatedEvent.get("eventStartDate")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("eventStartDate") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-certificate-blue-600 text-2xl font-bold"
+            >Fecha de fin</span
+          >
+          <input
+            type="datetime-local"
+            formControlName="eventEndDate"
+            class="input-normal p-3"
+            placeholder="Fecha de fin"
+          />
+          @if (
+            formCreatedEvent.get("eventEndDate")?.invalid &&
+            formCreatedEvent.get("eventEndDate")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("eventEndDate") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-certificate-blue-600 text-2xl font-bold"
+            >Número de horas</span
+          >
+          <input
+            type="number"
+            min="0"
+            step="0.5"
+            formControlName="eventHours"
+            class="input-normal p-3"
+            placeholder="Número de horas"
+          />
+          @if (
+            formCreatedEvent.get("eventHours")?.invalid &&
+            formCreatedEvent.get("eventHours")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("eventHours") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+        >
+          <span class="text-certificate-blue-600 text-2xl font-bold"
+            >Tipo de evento</span
+          >
+          <div class="w-full flex items-center justify-center space-x-2">
+            <select
+              formControlName="eventSelectedTypeEvent"
+              class="input-normal p-3"
+              placeholder="Tipo de evento"
+            >
+              @for (type of eventType; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+            <button
+              type="button"
+              class="button-normal w-auto px-3 py-2 text-2xl"
+              (click)="onClickCreateEventType()"
+            >
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+          @if (
+            formCreatedEvent.get("eventSelectedTypeEvent")?.invalid &&
+            formCreatedEvent.get("eventSelectedTypeEvent")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("eventSelectedTypeEvent") }}
+            </span>
+          }
+        </label>
+        <label
+          class="w-full flex flex-col items-start justify-center space-y-2"
+          [ngClass]="{ 'col-span-2': !showLocationField }"
+        >
+          <span class="text-certificate-blue-600 text-2xl font-bold"
+            >Modalidad</span
+          >
+          <select
+            formControlName="eventSelectedModeEvent"
+            class="input-normal p-3"
+            placeholder="Modalidad"
+          >
+            @for (modality of eventMode; track modality) {
+              <option [value]="modality">{{ modality }}</option>
+            }
+          </select>
+          @if (
+            formCreatedEvent.get("eventSelectedModeEvent")?.invalid &&
+            formCreatedEvent.get("eventSelectedModeEvent")?.touched
+          ) {
+            <span class="text-red-500 text-sm font-bold min-h-6">
+              {{ getErrorMessage("eventSelectedModeEvent") }}
+            </span>
+          }
+        </label>
+        @if (showLocationField) {
+          <label
+            class="w-full flex flex-col items-start justify-center space-y-2"
+          >
+            <span class="text-certificate-blue-600 text-2xl font-bold"
+              >Locación</span
+            >
+            <input
+              type="text"
+              formControlName="eventLocation"
+              class="input-normal p-3"
+              placeholder="Locación"
+            />
+            @if (
+              formCreatedEvent.get("eventLocation")?.invalid &&
+              formCreatedEvent.get("eventLocation")?.touched
+            ) {
+              <span class="text-red-500 text-sm font-bold min-h-6">
+                {{ getErrorMessage("eventLocation") }}
+              </span>
+            }
+          </label>
+        }
+        <div
+          class="sticky -bottom-4 bg-white pt-4 mt-2 z-10 col-span-1 md:col-span-2"
+        >
+          <button
+            type="submit"
+            class="button-normal w-full px-6 py-3 flex items-center justify-center text-lg"
+            [disabled]="formCreatedEvent.invalid"
+          >
+            <i class="bi bi-plus mr-2"></i>
+            <span>Crear evento</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  } @else if (isVisibleFormEventType) {
+    <form
+      method="post"
+      class="grid grid-cols-1 mt-4 gap-4 items-start"
+      [formGroup]="formCreatedEventType"
+    >
+      <label class="w-full flex flex-col items-start justify-center space-y-2">
+        <span class="text-certificate-blue-600 text-2xl font-bold"
+          >Nombre del tipo de evento</span
+        >
+        <input
+          type="text"
+          formControlName="eventTypeName"
+          class="input-normal p-3"
+          placeholder="Nombre del tipo de evento"
+        />
+        @if (
+          formCreatedEventType.get("eventTypeName")?.invalid &&
+          formCreatedEventType.get("eventTypeName")?.touched
+        ) {
+          <span class="text-red-500 text-sm font-bold min-h-6">
+            {{ getErrorMessage("eventTypeName") }}
+          </span>
+        }
+      </label>
+      <label class="w-full flex flex-col items-start justify-center space-y-2">
+        <span class="text-certificate-blue-600 text-2xl font-bold"
+          >Descripción del tipo de evento</span
+        >
+        <textarea
+          formControlName="eventTypeDescription"
+          class="input-normal h-48 p-3 resize-none"
+          placeholder="Descripción del tipo de evento"
+        ></textarea>
+        @if (
+          formCreatedEventType.get("eventTypeDescription")?.invalid &&
+          formCreatedEventType.get("eventTypeDescription")?.touched
+        ) {
+          <span class="text-red-500 text-sm font-bold min-h-6">
+            {{ getErrorMessage("eventTypeDescription") }}
+          </span>
+        }
+      </label>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+        <button
+          type="button"
+          class="button-normal w-auto px-3 py-2 text-2xl"
+          (click)="onClickAddEventType()"
+          [disabled]="formCreatedEventType.invalid"
+        >
+          <i class="bi bi-plus"></i>
+          <span>Agregar otro tipo de evento</span>
+        </button>
+        <button
+          type="button"
+          class="button-normal w-auto px-3 py-2 bg-red-400 text-certificate-blue-600 text-2xl"
+          (click)="onClickCancelForm()"
+        >
+          <i class="bi bi-x"></i>
+          <span>Cancelar</span>
+        </button>
+      </div>
+    </form>
+  } @else if (isVisibleTableSeeAllEvents) {
+    <div
+      class="w-full flex flex-col md:flex-row justify-between items-start md:items-center space-y-2"
+    >
+      <button
+        type="button"
+        class="button-normal w-auto px-3 py-2 text-2xl"
+        (click)="onClickBackToCreateEvent()"
+      >
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div class="w-full max-w-lg flex justify-center items-center space-x-2">
+        <div class="relative w-full">
+          <input
+            type="text"
+            class="input-normal p-3 w-full"
+            [class.pr-12]="searchQueryEvent !== ''"
+            [class.pr-3]="searchQueryEvent === ''"
+            placeholder="Buscar eventos por nombre del evento"
+            [(ngModel)]="searchQueryEvent"
+            autocomplete="off"
+          />
+          @if (searchQueryEvent) {
+            <button
+              type="button"
+              class="absolute text-4xl -top-2 -right-2 mt-3 mr-4 text-certificate-blue-600 hover:text-certificate-blue-700 cursor-pointer"
+              (click)="cleanSearchEvent()"
+            >
+              <i class="bi bi-x"></i>
+            </button>
+          }
+        </div>
+        <button
+          type="button"
+          class="button-normal w-auto px-6"
+          (click)="onClickSearchEvent()"
+        >
+          <i class="bi bi-search"></i>
+          <span class="hidden md:block">Buscar</span>
+        </button>
+      </div>
+    </div>
+    <div class="w-full mt-4 p-4">
+      <p-table
+        [value]="dataEvents"
+        [paginator]="true"
+        [rows]="4"
+        [globalFilterFields]="['MODALIDAD']"
+        [tableStyle]="{ 'min-width': '75rem' }"
+        editMode="row"
+        dataKey="id"
+        class="w-full"
+      >
+        <ng-template #header>
+          <tr>
+            @for (header of headersEvents; track header) {
+              @if (header === "MODALIDAD") {
+                <div
+                  class="flex items-center"
+                  [style.width.%]="getPercentageWithCells(headersEvents)"
+                >
+                  <th>
+                    {{ header }}
+                  </th>
+
+                  <p-columnFilter
+                    field="eventMode"
+                    display="menu"
+                    [showMatchModes]="false"
+                    matchMode="equals"
+                    [showOperator]="false"
+                    [showAddButton]="false"
+                    [showApplyButton]="false"
+                  >
+                    <ng-template #filter let-value let-filter="filterCallback">
+                      <p-select
+                        [options]="eventModeOptions"
+                        [(ngModel)]="valuesEventMode"
+                        placeholder="Seleccionar modalidad"
+                        (onChange)="filter($event.value)"
+                        [style]="{ width: '100%' }"
+                      />
+                    </ng-template>
+                  </p-columnFilter>
+                </div>
+              } @else if (header === "TIPO DE EVENTO") {
+                <div
+                  class="flex items-center"
+                  [style.width.%]="getPercentageWithCells(headersEvents)"
+                >
+                  <th>
+                    {{ header }}
+                  </th>
+
+                  <p-columnFilter
+                    field="eventType"
+                    display="menu"
+                    [showMatchModes]="false"
+                    matchMode="equals"
+                    [showOperator]="false"
+                    [showAddButton]="false"
+                    [showApplyButton]="false"
+                  >
+                    <ng-template #filter let-value let-filter="filterCallback">
+                      <p-select
+                        [options]="eventTypeOptions"
+                        [(ngModel)]="valuesEventType"
+                        placeholder="Seleccionar tipo de evento"
+                        (onChange)="filter($event.value)"
+                        [style]="{ width: '100%' }"
+                      />
+                    </ng-template>
+                  </p-columnFilter>
+                </div>
+              } @else {
+                <th [style.width.%]="getPercentageWithCells(headersEvents)">
+                  {{ header }}
+                </th>
+              }
+            }
+          </tr>
+        </ng-template>
+
+        <ng-template #body let-data let-editing="editing" let-ri="rowIndex">
+          <tr
+            [ngStyle]="rowStyleAllEvent(data)"
+            [pEditableRow]="data"
+            class="overflow-hidden"
+          >
+            <td>{{ data.id }}</td>
+            <td>{{ data.eventName }}</td>
+            <td>{{ data.eventStartDate | date: "dd/MM/yyyy HH:mm" }}</td>
+            <td>{{ data.eventEndDate | date: "dd/MM/yyyy HH:mm" }}</td>
+            <td>
+              <p-cellEditor>
+                <ng-template #input>
+                  <p-select
+                    [options]="eventModeOptions"
+                    [(ngModel)]="data.eventMode"
+                    placeholder="Seleccionar modalidad"
+                    [style]="{ width: '100%' }"
+                  />
+                </ng-template>
+                <ng-template #output>
+                  {{ data.eventMode }}
+                </ng-template>
+              </p-cellEditor>
+            </td>
+            <td>{{ data.eventHours }}</td>
+            <td>
+              <p-cellEditor>
+                <ng-template #input>
+                  <p-select
+                    [options]="eventTypeOptions"
+                    [(ngModel)]="data.eventType"
+                    placeholder="Seleccionar tipo de evento"
+                    [style]="{ width: '100%' }"
+                  />
+                </ng-template>
+                <ng-template #output>
+                  {{ data.eventType }}
+                </ng-template>
+              </p-cellEditor>
+            </td>
+            <td>{{ data.eventLocation }}</td>
+            <td>
+              <div class="flex items-center justify-center space-x-2">
+                @if (!isEditingEvent) {
+                  <button
+                    pButton
+                    pRipple
+                    type="button"
+                    pInitEditableRow
+                    class="button-normal w-auto px-3 py-2 text-2xl"
+                    (click)="onRowEditInitEvent(data)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                } @else if (isEditingEvent) {
+                  <button
+                    pButton
+                    pRipple
+                    type="button"
+                    pSaveEditableRow
+                    class="button-normal w-auto px-3 py-2 bg-green-400 text-certificate-blue-600 text-2xl"
+                    (click)="onRowEditSaveEvent(data)"
+                  >
+                    <i class="bi bi-check"></i>
+                  </button>
+                  <button
+                    pButton
+                    pRipple
+                    type="button"
+                    pCancelEditableRow
+                    class="button-normal w-auto px-3 py-2 bg-red-400 text-certificate-blue-600 text-2xl"
+                    (click)="onRowEditCancelEvent(data, ri)"
+                    severity="danger"
+                  >
+                    <i class="bi bi-x"></i>
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template #emptymessage>
+          <tr style="height: 30rem">
+            <td
+              colspan="8"
+              class="text-center text-certificate-blue-200 text-xl"
+            >
+              No se encontraron resultados
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog
+  header="Agregar participante"
+  [(visible)]="isVisibleFormAddParticipant"
+  [modal]="true"
+  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+  [style]="{ width: '50vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  maskStyleClass="backdrop-blur-sm"
+>
+  <form
+    method="post"
+    class="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4 items-start"
+    [formGroup]="formAddParticipant"
+  >
+    <label class="w-full flex flex-col items-start justify-center space-y-2">
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Tipo de documento</span
+      >
+      <select
+        formControlName="participantTypeDocument"
+        class="input-normal p-3"
+        placeholder="Tipo de documento"
+      >
+        @for (type of documentType; track type) {
+          <option [value]="type">{{ type }}</option>
+        }
+      </select>
+      @if (
+        formAddParticipant.get("participantTypeDocument")?.invalid &&
+        formAddParticipant.get("participantTypeDocument")?.touched
+      ) {
+        <span class="text-red-500 text-sm font-bold min-h-6">
+          {{ getErrorMessage("participantTypeDocument") }}
+        </span>
+      }
+    </label>
+    <label class="w-full flex flex-col items-start justify-center space-y-2">
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Número de documento</span
+      >
+      <div class="flex items-center justify-center space-x-2 w-full">
+        <input
+          type="text"
+          formControlName="participantNumberDocument"
+          class="input-normal p-3"
+          placeholder="Número de documento"
+          (input)="
+            onChangeNumberDocument(
+              formAddParticipant,
+              'participantNumberDocument'
+            )
+          "
+        />
+        <button
+          type="button"
+          class="button-normal w-auto px-3 py-2 text-2xl"
+          (click)="onClickSearchParticipant()"
+          [disabled]="isDisabledButtonSearchNumberDocument"
+        >
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+      @if (
+        formAddParticipant.get("participantNumberDocument")?.invalid &&
+        formAddParticipant.get("participantNumberDocument")?.touched
+      ) {
+        <span class="text-red-500 text-sm font-bold min-h-6">
+          {{ getErrorMessage("participantNumberDocument") }}
+        </span>
+      }
+    </label>
+    <label
+      class="col-span-1 md:col-span-2 w-full flex flex-col items-start justify-center space-y-2"
+    >
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Nombre del participante</span
+      >
+      <input
+        type="text"
+        class="input-normal p-3"
+        placeholder="Nombre del participante"
+        [value]="participantName"
+        readonly
+      />
+    </label>
+    <label class="w-full flex flex-col items-start justify-center space-y-2">
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Apellido paterno</span
+      >
+      <input
+        type="text"
+        [value]="participantPaternalSurname"
+        class="input-normal p-3"
+        placeholder="Apellido paterno"
+        readonly
+      />
+    </label>
+    <label class="w-full flex flex-col items-start justify-center space-y-2">
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Apellido materno</span
+      >
+      <input
+        type="text"
+        [value]="participantMaternalSurname"
+        class="input-normal p-3"
+        placeholder="Apellido materno"
+        readonly
+      />
+    </label>
+    <label
+      class="col-span-1 md:col-span-2 w-full flex flex-col items-start justify-center space-y-2"
+    >
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Correo electrónico</span
+      >
+      <input
+        type="email"
+        formControlName="participantEmail"
+        class="input-normal p-3"
+        placeholder="Correo electrónico"
+      />
+      @if (
+        formAddParticipant.get("participantEmail")?.invalid &&
+        formAddParticipant.get("participantEmail")?.touched
+      ) {
+        <span class="text-red-500 text-sm font-bold min-h-6">
+          {{ getErrorMessage("participantEmail") }}
+        </span>
+      }
+    </label>
+    <button
+      type="submit"
+      class="button-normal w-full px-6 py-3 flex items-center justify-center text-lg col-span-1 md:col-span-2"
+      [disabled]="formAddParticipant.invalid"
+    >
+      <i class="bi bi-plus mr-2"></i>
+      <span>Agregar participante</span>
+    </button>
+  </form>
+</p-dialog>
+
+<p-dialog
+  header="Emitir Certificado"
+  [(visible)]="isVisibleFormIssueCertificate"
+  [modal]="true"
+  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+  [style]="{ width: '50vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  maskStyleClass="backdrop-blur-sm"
+>
+  <form
+    method="post"
+    class="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4 items-start"
+    [formGroup]="formEmitCertificate"
+  >
+    <label class="w-full flex flex-col items-start justify-center space-y-2">
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Tipo de documento</span
+      >
+      <select
+        formControlName="emitTypeDocument"
+        class="input-normal p-3"
+        placeholder="Tipo de documento"
+      >
+        @for (type of documentType; track type) {
+          <option [value]="type">{{ type }}</option>
+        }
+      </select>
+      @if (
+        formEmitCertificate.get("emitTypeDocument")?.invalid &&
+        formEmitCertificate.get("emitTypeDocument")?.touched
+      ) {
+        <span class="text-red-500 text-sm font-bold min-h-6">
+          {{ getErrorMessage("emitTypeDocument") }}
+        </span>
+      }
+    </label>
+    <label class="w-full flex flex-col items-start justify-center space-y-2">
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Número de documento</span
+      >
+      <div class="flex items-center justify-center space-x-2 w-full">
+        <input
+          type="text"
+          formControlName="emitNumberDocument"
+          class="input-normal p-3"
+          placeholder="Número de documento"
+          (input)="
+            onChangeNumberDocument(formEmitCertificate, 'emitNumberDocument')
+          "
+        />
+        <button
+          type="button"
+          class="button-normal w-auto px-3 py-2 text-2xl"
+          (click)="onClickSearchParticipant()"
+          [disabled]="isDisabledButtonSearchEmitNumberDocument"
+        >
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+      @if (
+        formEmitCertificate.get("emitNumberDocument")?.invalid &&
+        formEmitCertificate.get("emitNumberDocument")?.touched
+      ) {
+        <span class="text-red-500 text-sm font-bold min-h-6">
+          {{ getErrorMessage("emitNumberDocument") }}
+        </span>
+      }
+    </label>
+    <label
+      class="col-span-1 md:col-span-2 w-full flex flex-col items-start justify-center space-y-2"
+    >
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Nombre del participante</span
+      >
+      <input
+        type="text"
+        class="input-normal p-3"
+        [value]="emitFullName"
+        readonly
+      />
+    </label>
+    <label class="w-full flex flex-col items-start justify-center space-y-2">
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Tipo de evento</span
+      >
+      <select
+        formControlName="emitSelectedTypeEvent"
+        class="input-normal p-3"
+        placeholder="Tipo de evento"
+      >
+        @for (type of eventType; track type) {
+          <option [value]="type">{{ type }}</option>
+        }
+      </select>
+      @if (
+        formEmitCertificate.get("emitSelectedTypeEvent")?.invalid &&
+        formEmitCertificate.get("emitSelectedTypeEvent")?.touched
+      ) {
+        <span class="text-red-500 text-sm font-bold min-h-6">
+          {{ getErrorMessage("emitSelectedTypeEvent") }}
+        </span>
+      }
+    </label>
+    <label class="w-full flex flex-col items-start justify-center space-y-2">
+      <span class="text-certificate-blue-600 text-2xl font-bold"
+        >Nota del participante</span
+      >
+      <input
+        type="number"
+        formControlName="emitParticipantNote"
+        class="input-normal p-3"
+        min="0"
+        max="20"
+        step="0.5"
+        placeholder="Nota del participante"
+      />
+      @if (
+        formEmitCertificate.get("emitParticipantNote")?.invalid &&
+        formEmitCertificate.get("emitParticipantNote")?.touched
+      ) {
+        <span class="text-red-500 text-sm font-bold min-h-6">
+          {{ getErrorMessage("emitParticipantNote") }}
+        </span>
+      }
+    </label>
+    <button
+      type="submit"
+      class="button-normal w-full px-6 py-3 flex items-center justify-center text-lg col-span-1 md:col-span-2"
+      [disabled]="formEmitCertificate.invalid"
+    >
+      <i class="bi bi-plus mr-2"></i>
+      <span>Emitir certificado</span>
+    </button>
+  </form>
+</p-dialog>
+
+<app-navbar [(isOpen)]="isOpen" />
+
+<div class="w-full h-[calc(100vh-96px)] flex">
+  <app-sidebar [(isOpen)]="isOpen" />
+
+  <div class="flex-grow p-6 overflow-auto">
+    <div class="flex flex-col items-start justify-center space-y-4 w-full">
+      <div class="flex items-center justify-between w-full">
+        <h1 class="text-4xl font-bold text-certificate-blue-600">
+          Certificados
+        </h1>
+        <div class="flex md:hidden justify-center">
+          <p-menu #menu1 [model]="items" [popup]="true" />
+          <p-button
+            (click)="menu1.toggle($event)"
+            icon="pi pi-ellipsis-v"
+            [style]="{
+              'background-color': '#2c2f4a',
+              color: '#fff',
+              border: 'none',
+              padding: '1rem 2rem',
+            }"
+          />
+        </div>
+      </div>
+      <div class="w-full flex items-center justify-center space-x-4">
+        <div class="relative w-full">
+          <input
+            type="text"
+            class="input-normal p-3"
+            [class.pr-12]="searchQuery !== ''"
+            [class.pr-3]="searchQuery === ''"
+            placeholder="Buscar certificados por nombre del participante"
+            [(ngModel)]="searchQuery"
+            autocomplete="off"
+          />
+          @if (searchQuery) {
+            <button
+              type="button"
+              class="absolute text-4xl -top-2 -right-2 mt-3 mr-4 text-certificate-blue-600 hover:text-certificate-blue-700 cursor-pointer"
+              (click)="cleanSearch()"
+            >
+              <i class="bi bi-x"></i>
+            </button>
+          }
+        </div>
+        <button type="button" class="button-normal w-auto px-6">
+          <i class="bi bi-search"></i>
+          <span class="hidden md:block">Buscar</span>
+        </button>
+        <div class="hidden md:flex justify-center">
+          <p-menu #menu [model]="items" [popup]="true" />
+          <p-button
+            (click)="menu.toggle($event)"
+            icon="pi pi-ellipsis-v"
+            [style]="{
+              'background-color': '#2c2f4a',
+              color: '#fff',
+              border: 'none',
+              padding: '1rem 2rem',
+            }"
+          />
+        </div>
+      </div>
+    </div>
+
+    <p-table
+      [value]="data"
+      [paginator]="true"
+      [rows]="7"
+      [globalFilterFields]="['ESTADO']"
+      [tableStyle]="{ 'min-width': '75rem', 'margin-top': '2rem' }"
+      editMode="row"
+      dataKey="id"
+      class="w-full"
+    >
+      <ng-template #header>
+        <tr>
+          @for (header of headers; track header) {
+            @if (header === "ESTADO") {
+              <div class="flex items-center">
+                <th [style.width.%]="getPercentageWithCells(headers)">
+                  {{ header }}
+                </th>
+                <p-columnFilter
+                  field="status"
+                  display="menu"
+                  [showMatchModes]="false"
+                  matchMode="equals"
+                  [showOperator]="false"
+                  [showAddButton]="false"
+                  [showApplyButton]="false"
+                >
+                  <ng-template #filter let-value let-filter="filterCallback">
+                    <p-select
+                      [options]="statusOptions"
+                      [(ngModel)]="values"
+                      placeholder="Seleccionar estado"
+                      (onChange)="filter($event.value)"
+                      [style]="{ width: '100%' }"
+                    />
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            } @else {
+              <th [style.width.%]="getPercentageWithCells(headers)">
+                {{ header }}
+              </th>
+            }
+          }
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-data let-editing="editing" let-ri="rowIndex">
+        <tr
+          [ngStyle]="rowStyle(data)"
+          [pEditableRow]="data"
+          class="overflow-hidden"
+        >
+          <td>{{ data.id }}</td>
+          <td>{{ data.certificate }}</td>
+          <td>{{ data.participant }}</td>
+          <td>
+            <p-cellEditor>
+              <ng-template #input>
+                <p-select
+                  [options]="statusOptions"
+                  [(ngModel)]="data.status"
+                  placeholder="Seleccionar estado"
+                  [style]="{ width: '100%' }"
+                />
+              </ng-template>
+              <ng-template #output>
+                <p-tag [value]="data.status" [severity]="getSeverity(data)" />
+              </ng-template>
+            </p-cellEditor>
+          </td>
+          <td>{{ data.date | date: "dd/MM/yyyy" }}</td>
+          <td>
+            <div class="flex items-center justify-center space-x-2">
+              @if (!isEditing) {
+                <button
+                  pButton
+                  pRipple
+                  type="button"
+                  pInitEditableRow
+                  class="button-normal w-auto px-3 py-2 text-2xl"
+                  (click)="onRowEditInit(data)"
+                >
+                  <i class="bi bi-pencil"></i>
+                </button>
+              } @else if (isEditing) {
+                <button
+                  pButton
+                  pRipple
+                  type="button"
+                  pSaveEditableRow
+                  class="button-normal w-auto px-3 py-2 bg-green-400 text-certificate-blue-600 text-2xl"
+                  (click)="onRowEditSave(data)"
+                >
+                  <i class="bi bi-check"></i>
+                </button>
+                <button
+                  pButton
+                  pRipple
+                  type="button"
+                  pCancelEditableRow
+                  class="button-normal w-auto px-3 py-2 bg-red-400 text-certificate-blue-600 text-2xl"
+                  (click)="onRowEditCancel(data, ri)"
+                  severity="danger"
+                >
+                  <i class="bi bi-x"></i>
+                </button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr style="height: 30rem">
+          <td colspan="6" class="text-center text-certificate-blue-200 text-xl">
+            No se encontraron resultados
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
