@@ -3,16 +3,17 @@ import { NavbarComponent, SidebarComponent } from "../../shared"
 import {
   FormControl,
   FormGroup,
-  FormsModule,
   NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from "@angular/forms"
 import { inject } from "@angular/core"
+import { PersonalService } from "../../../core/infrastructure/api/personal.service"
+import { PersonalData } from "../../../core/domain"
+import { ParticipantService } from "../../../core/infrastructure"
 
 enum UserTypeEnum {
   ADMIN = "AD",
-  PARTICIPANT = "PA",
   PERSONAL = "PE",
 }
 
@@ -38,6 +39,8 @@ interface SelectDocumentType {
   styleUrl: "./add-user.component.css",
 })
 export class AddUserComponent {
+  protected personalService = inject(PersonalService)
+  protected participantService = inject(ParticipantService)
   protected isOpen: boolean = false
   protected fb = inject(NonNullableFormBuilder)
   protected name: string = ""
@@ -46,16 +49,13 @@ export class AddUserComponent {
   protected email: string = ""
   protected documentType: string = "DNI"
   protected documentNumber: string = ""
-  protected userType: UserTypeEnum = UserTypeEnum.PARTICIPANT
+  protected userType: UserTypeEnum = UserTypeEnum.PERSONAL
 
   protected selectDocumentType: SelectDocumentType[] = [
     { label: "DNI", value: "DNI" },
   ]
 
-  protected selectUserType: UserTypeEnum[] = [
-    UserTypeEnum.PARTICIPANT,
-    UserTypeEnum.PERSONAL,
-  ]
+  protected selectUserType: UserTypeEnum[] = [UserTypeEnum.PERSONAL]
 
   protected formAddUser: FormGroup<FormAddUser> = this.fb.group<FormAddUser>({
     name: this.fb.control<string>(this.name, {
@@ -93,5 +93,36 @@ export class AddUserComponent {
       return `Máximo ${formControl.errors?.["maxlength"].requiredLength} caracteres`
     }
     return ""
+  }
+
+  addUser(): void {
+    if (this.formAddUser.invalid) {
+      this.formAddUser.markAllAsTouched()
+      return
+    }
+
+    const formValue = this.formAddUser.getRawValue()
+
+    const data: PersonalData = {
+      nombre: formValue.name,
+      apellidoPat: formValue.paternalSurname,
+      apellidoMat: formValue.maternalSurname,
+      correoElectronico: formValue.email,
+      numDocumento: formValue.documentNumber,
+      idTipoDocumento: 1,
+      activo: true,
+      tipoDeUsuario: formValue.userType,
+    }
+
+    this.personalService.createPersonal(data).subscribe({
+      next: (response) => {
+        // Mostrar mensaje de éxito o redirigir
+        console.log("✅ Usuario creado:", response)
+      },
+      error: (err) => {
+        // Mostrar mensaje de error
+        console.error("❌ Error al crear usuario:", err)
+      },
+    })
   }
 }

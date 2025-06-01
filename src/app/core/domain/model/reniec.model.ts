@@ -1,5 +1,6 @@
 export interface Reniec {
-  name: string
-  paternalSurname: string
-  maternalSurname: string
+  nombres: string
+  apellidoPaterno: string
+  apellidoMaterno: string
+  nombreCompleto: string
 }

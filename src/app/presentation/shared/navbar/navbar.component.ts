@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core"
 import { AvatarModule } from "primeng/avatar"
+import { jwtDecode } from "jwt-decode"
+import { JwtPayload } from "../../../core/domain"
 
 @Component({
   selector: "app-navbar",
@@ -8,13 +10,16 @@ import { AvatarModule } from "primeng/avatar"
   styleUrl: "./navbar.component.css",
 })
 export class NavbarComponent {
+  protected token = localStorage.getItem("accessToken")
   @Input() isOpen: boolean = false
   @Output() isOpenChange: EventEmitter<boolean> = new EventEmitter<boolean>()
-  username: string = "Jhon Doe"
+  username: string = jwtDecode<JwtPayload>(this.token || "").fullName
 
   get usernameInitials(): string {
-    return this.username
-      .split(" ")
+    const names = this.username.split(" ")
+    // Tomar solo las dos primeras palabras y obtener la primera letra de cada una
+    return names
+      .slice(0, 2)
       .map((name) => name.charAt(0))
       .join("")
       .toUpperCase()

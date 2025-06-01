@@ -166,7 +166,7 @@
               placeholder="Tipo de evento"
             >
               @for (type of eventType; track type) {
-                <option [value]="type">{{ type }}</option>
+                <option [value]="type.id">{{ type.nombre }}</option>
               }
             </select>
             <button
@@ -188,18 +188,26 @@
         </label>
         <label
           class="w-full flex flex-col items-start justify-center space-y-2"
-          [ngClass]="{ 'col-span-2': !showLocationField }"
+          [ngClass]="{
+            'col-span-1 md:col-span-2':
+              showLocationField === false && showLinkField === true,
+            'col-span-1': showLocationField === true,
+          }"
         >
           <span class="text-certificate-blue-600 text-2xl font-bold"
             >Modalidad</span
           >
           <select
+            #RefModality
             formControlName="eventSelectedModeEvent"
             class="input-normal p-3"
             placeholder="Modalidad"
+            (change)="onChangeSelectModality(RefModality.value)"
           >
-            @for (modality of eventMode; track modality) {
-              <option [value]="modality">{{ modality }}</option>
+            @for (modality of eventMode; track modality; let idx = $index) {
+              <option [value]="modality.id">
+                {{ modality.name }}
+              </option>
             }
           </select>
           @if (
@@ -211,6 +219,8 @@
             </span>
           }
         </label>
+
+        <!-- Campo Locación -->
         @if (showLocationField) {
           <label
             class="w-full flex flex-col items-start justify-center space-y-2"
@@ -234,11 +244,37 @@
             }
           </label>
         }
+
+        <!-- Campo Link -->
+        @if (showLinkField) {
+          <label
+            class="col-span-1 md:col-span-2 w-full flex flex-col items-start justify-center space-y-2"
+          >
+            <span class="text-certificate-blue-600 text-2xl font-bold"
+              >Link de la reunión</span
+            >
+            <input
+              type="text"
+              formControlName="eventURL"
+              class="input-normal p-3"
+              placeholder="Link de la reunión"
+            />
+            @if (
+              formCreatedEvent.get("eventURL")?.invalid &&
+              formCreatedEvent.get("eventURL")?.touched
+            ) {
+              <span class="text-red-500 text-sm font-bold min-h-6">
+                {{ getErrorMessage("eventURL") }}
+              </span>
+            }
+          </label>
+        }
         <div
           class="sticky -bottom-4 bg-white pt-4 mt-2 z-10 col-span-1 md:col-span-2"
         >
           <button
             type="submit"
+            (click)="onClickCreateEvent()"
             class="button-normal w-full px-6 py-3 flex items-center justify-center text-lg"
             [disabled]="formCreatedEvent.invalid"
           >
@@ -355,6 +391,7 @@
     </div>
     <div class="w-full mt-4 p-4">
       <p-table
+        [lazy]="true"
         [value]="dataEvents"
         [paginator]="true"
         [rows]="4"
@@ -362,6 +399,8 @@
         [tableStyle]="{ 'min-width': '75rem' }"
         editMode="row"
         dataKey="id"
+        [totalRecords]="totalRecords"
+        (onLazyLoad)="loadEvents($event)"
         class="w-full"
       >
         <ng-template #header>
@@ -455,7 +494,7 @@
                   />
                 </ng-template>
                 <ng-template #output>
-                  {{ data.eventMode }}
+                  {{ getNameById(data.eventMode) }}
                 </ng-template>
               </p-cellEditor>
             </td>
@@ -466,6 +505,8 @@
                   <p-select
                     [options]="eventTypeOptions"
                     [(ngModel)]="data.eventType"
+                    optionLabel="nombre"
+                    optionValue="id"
                     placeholder="Seleccionar tipo de evento"
                     [style]="{ width: '100%' }"
                   />
@@ -476,9 +517,10 @@
               </p-cellEditor>
             </td>
             <td>{{ data.eventLocation }}</td>
+            <td>{{ data.eventURL }}</td>
             <td>
               <div class="flex items-center justify-center space-x-2">
-                @if (!isEditingEvent) {
+                @if (editingRowEventId !== data.id) {
                   <button
                     pButton
                     pRipple
@@ -489,7 +531,7 @@
                   >
                     <i class="bi bi-pencil"></i>
                   </button>
-                } @else if (isEditingEvent) {
+                } @else {
                   <button
                     pButton
                     pRipple
@@ -613,8 +655,8 @@
       <input
         type="text"
         class="input-normal p-3"
+        formControlName="participantName"
         placeholder="Nombre del participante"
-        [value]="participantName"
         readonly
       />
     </label>
@@ -624,7 +666,7 @@
       >
       <input
         type="text"
-        [value]="participantPaternalSurname"
+        formControlName="participantPaternalSurname"
         class="input-normal p-3"
         placeholder="Apellido paterno"
         readonly
@@ -636,7 +678,7 @@
       >
       <input
         type="text"
-        [value]="participantMaternalSurname"
+        formControlName="participantMaternalSurname"
         class="input-normal p-3"
         placeholder="Apellido materno"
         readonly
@@ -665,6 +707,7 @@
     </label>
     <button
       type="submit"
+      (click)="onClickAddParticipant()"
       class="button-normal w-full px-6 py-3 flex items-center justify-center text-lg col-span-1 md:col-span-2"
       [disabled]="formAddParticipant.invalid"
     >
@@ -951,7 +994,7 @@
           <td>{{ data.date | date: "dd/MM/yyyy" }}</td>
           <td>
             <div class="flex items-center justify-center space-x-2">
-              @if (!isEditing) {
+              @if (editingRowId !== data.id) {
                 <button
                   pButton
                   pRipple
@@ -962,7 +1005,7 @@
                 >
                   <i class="bi bi-pencil"></i>
                 </button>
-              } @else if (isEditing) {
+              } @else {
                 <button
                   pButton
                   pRipple

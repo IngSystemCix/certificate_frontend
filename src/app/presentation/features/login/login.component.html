@@ -89,22 +89,23 @@
       <div
         class="w-full flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-2"
       >
+        <button class="button-outline" (click)="onClickBack()">
+          <i class="bi bi-arrow-left"></i>
+          <span>Regresar</span>
+        </button>
+
         <button
           type="button"
           class="button-outline"
           (click)="onClickResendCode()"
           [disabled]="isButtonResendCodeDisabled"
         >
-          <span>{{ buttonResendCodeText }}</span>
           @if (isButtonResendCodeDisabled) {
             <i class="bi bi-clock"></i>
           } @else {
             <i class="bi bi-arrow-clockwise"></i>
           }
-        </button>
-        <button class="button-outline" (click)="onClickBack()">
-          <span>Regresar</span>
-          <i class="bi bi-arrow-left"></i>
+          <span>{{ buttonResendCodeText }}</span>
         </button>
       </div>
     }

@@ -90,8 +90,8 @@
           </span>
           <input
             type="text"
-            name="lastName"
-            formControlName="lastName"
+            name="paternalSurname"
+            formControlName="paternalSurname"
             class="input-normal p-3"
             required
           />
@@ -161,8 +161,8 @@
             required
           >
             @for (item of selectUserType; track item) {
-              <option [value]="item">
-                {{ item === "PE" ? "PERSONAL" : "PARTICIPANTE" }}
+              <option [value]="item === 'PE' ? 'PERSONAL' : 'ADMIN'">
+                {{ item === "PE" ? "PERSONAL" : "ADMIN" }}
               </option>
             }
           </select>
@@ -177,6 +177,7 @@
         </label>
         <button
           type="submit"
+          (click)="addUser()"
           class="col-span-1 md:col-span-2 button-normal"
           [disabled]="formAddUser.invalid"
         >

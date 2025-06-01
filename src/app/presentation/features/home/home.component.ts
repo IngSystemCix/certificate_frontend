@@ -1,5 +1,5 @@
-import { CommonModule, NgClass, NgStyle } from "@angular/common"
-import { Component, inject, OnInit, Signal, signal } from "@angular/core"
+import { CommonModule, NgStyle } from "@angular/common"
+import { Component, OnInit, inject, signal } from "@angular/core"
 import {
   FormControl,
   FormGroup,
@@ -11,10 +11,18 @@ import {
 import { ButtonModule } from "primeng/button"
 import { Dialog } from "primeng/dialog"
 import { Menu } from "primeng/menu"
-import { SelectModule } from "primeng/select"
-import { TableModule } from "primeng/table"
-import { TagModule } from "primeng/tag"
 import { Message } from "primeng/message"
+import { SelectModule } from "primeng/select"
+import { TableLazyLoadEvent, TableModule } from "primeng/table"
+import { TagModule } from "primeng/tag"
+import {
+  EventData,
+  KeyValueTypeEvent,
+  Participant,
+  TypeEvent,
+} from "../../../core/domain"
+import { ParticipantService } from "../../../core/infrastructure"
+import { EventService } from "../../../core/infrastructure/api/event.service"
 import { NavbarComponent, SidebarComponent } from "../../shared"
 
 enum statusEnum {
@@ -24,9 +32,9 @@ enum statusEnum {
 }
 
 enum typeModeEventEnum {
-  PRESENCIAL = "Presencial",
-  REMOTO = "Remoto",
-  HIBRIDO = "Híbrido",
+  PRESENCIAL = 1,
+  VIRTUAL = 2,
+  HIBRIDO = 3,
 }
 
 interface DataItem {
@@ -47,6 +55,7 @@ interface DataSeeAllEvent {
   eventHours: string
   eventType: string
   eventLocation: string
+  eventURL: string
   actions: string
 }
 
@@ -65,9 +74,13 @@ interface FormCreateEventType {
   eventSelectedTypeEvent: FormControl<string>
   eventSelectedModeEvent: FormControl<typeModeEventEnum>
   eventLocation?: FormControl<string>
+  eventURL?: FormControl<string>
 }
 
 interface FormParticipantType {
+  participantName: FormControl<string>
+  participantPaternalSurname: FormControl<string>
+  participantMaternalSurname: FormControl<string>
   participantTypeDocument: FormControl<string>
   participantNumberDocument: FormControl<string>
   participantEmail: FormControl<string>
@@ -100,13 +113,14 @@ interface FormEventType {
     ButtonModule,
     Dialog,
     ReactiveFormsModule,
-    NgClass,
     Message,
   ],
   templateUrl: "./home.component.html",
   styleUrl: "./home.component.css",
 })
 export class HomeComponent implements OnInit {
+  protected participantService = inject(ParticipantService)
+  protected eventService = inject(EventService)
   protected titleModalCreateEvent: string = "Crear Evento"
   protected isMessageModifyData: boolean = false
   protected isMessageCancelModifyData: boolean = false
@@ -120,18 +134,18 @@ export class HomeComponent implements OnInit {
   protected eventSelectedModeEvent: typeModeEventEnum =
     typeModeEventEnum.PRESENCIAL
   protected eventLocation: string = ""
-  protected eventType: string[] = [
-    "Capacitación",
-    "Taller",
-    "Curso",
-    "Seminario",
-    "Conferencia",
+  protected eventURL: string = ""
+  protected eventType!: KeyValueTypeEvent[]
+  eventMode = [
+    { id: 1, name: "PRESENCIAL" },
+    { id: 2, name: "VIRTUAL" },
+    { id: 3, name: "HIBRIDO" },
   ]
-  protected eventMode: typeModeEventEnum[] = [
-    typeModeEventEnum.PRESENCIAL,
-    typeModeEventEnum.REMOTO,
-    typeModeEventEnum.HIBRIDO,
-  ]
+
+  getNameById(id: number): string {
+    const modality = this.eventMode.find((m) => m.id === id)
+    return modality ? modality.name : ""
+  }
 
   protected formCreatedEvent: FormGroup<FormCreateEventType> =
     this.fb.group<FormCreateEventType>({
@@ -152,7 +166,45 @@ export class HomeComponent implements OnInit {
         Validators.required,
       ),
       eventLocation: this.fb.control(this.eventLocation), // inicialmente sin validadores
+      eventURL: this.fb.control(this.eventURL),
     })
+
+  onClickCreateEvent() {
+    if (this.formCreatedEvent.invalid) {
+      this.formCreatedEvent.markAllAsTouched()
+      return
+    }
+
+    const formValue = this.formCreatedEvent.getRawValue()
+
+    const newEvent: EventData = {
+      nombre: formValue.eventName,
+      descripcion: formValue.eventDescription,
+      fechaInicio: formValue.eventStartDate,
+      fechaFin: formValue.eventEndDate,
+      duracion: formValue.eventHours,
+      idTipoEvento: formValue.eventSelectedTypeEvent,
+      idModalidad: Number(formValue.eventSelectedModeEvent),
+      enlaceEvento: formValue.eventURL || undefined,
+      lugar: formValue.eventLocation || undefined,
+      activo: "ACTIVADO",
+    }
+
+    this.eventService.createEvent(newEvent).subscribe({
+      next: (response) => {
+        if (response.success) {
+          // Puedes limpiar el formulario o redirigir
+          this.formCreatedEvent.reset()
+          this.isVisibleFormCreateEvent = false
+        } else {
+          console.error("Error en la respuesta:", response.message)
+        }
+      },
+      error: (err) => {
+        console.error("Error al crear el evento:", err)
+      },
+    })
+  }
 
   protected participantTypeDocument: string = "DNI"
   protected participantNumberDocument: string = ""
@@ -164,6 +216,21 @@ export class HomeComponent implements OnInit {
 
   protected formAddParticipant: FormGroup<FormParticipantType> =
     this.fb.group<FormParticipantType>({
+      participantName: this.fb.control(this.participantName, {
+        validators: [Validators.required],
+      }),
+      participantPaternalSurname: this.fb.control(
+        this.participantPaternalSurname,
+        {
+          validators: [Validators.required],
+        },
+      ),
+      participantMaternalSurname: this.fb.control(
+        this.participantMaternalSurname,
+        {
+          validators: [Validators.required],
+        },
+      ),
       participantTypeDocument: this.fb.control(this.participantTypeDocument, {
         validators: [Validators.required],
       }),
@@ -186,9 +253,58 @@ export class HomeComponent implements OnInit {
   documentType: string[] = ["DNI"]
 
   onClickSearchParticipant() {
-    this.participantName = "Juan"
-    this.participantPaternalSurname = "Romero"
-    this.participantMaternalSurname = "Collazos"
+    const dni = this.formAddParticipant
+      .get("participantNumberDocument")
+      ?.value?.trim()
+
+    if (!dni || dni.length !== 8 || !/^\d{8}$/.test(dni)) {
+      console.error("DNI inválido. Debe contener 8 dígitos numéricos.")
+      return
+    }
+
+    this.participantService.getDataPerson(dni).subscribe({
+      next: (response) => {
+        const data = response.data
+        this.formAddParticipant.patchValue({
+          participantName: data.nombres ?? "",
+          participantPaternalSurname: data.apellidoPaterno ?? "",
+          participantMaternalSurname: data.apellidoMaterno ?? "",
+          participantTypeDocument: this.participantTypeDocument,
+          participantNumberDocument: dni,
+          participantEmail: "",
+        })
+      },
+      error: (err) => {
+        console.error("Error al buscar datos del participante:", err)
+      },
+    })
+  }
+
+  onClickAddParticipant() {
+    if (this.formAddParticipant.valid) {
+      const formValue = this.formAddParticipant.getRawValue()
+
+      const participantData: Participant = {
+        numDocumento: formValue.participantNumberDocument,
+        idTipoDocumento: 1,
+        nombre: formValue.participantName,
+        apellidoPat: formValue.participantPaternalSurname,
+        apellidoMat: formValue.participantMaternalSurname,
+        email: formValue.participantEmail,
+      }
+
+      this.participantService.createParticipant(participantData).subscribe({
+        next: (_response) => {
+          this.formAddParticipant.reset({ participantTypeDocument: "DNI" })
+          this.isVisibleFormAddParticipant = false
+        },
+        error: (err) => {
+          console.error("Error al crear participante:", err)
+        },
+      })
+    } else {
+      console.error("Formulario de participante inválido")
+    }
   }
 
   onChangeNumberDocument(form: FormGroup, input: string) {
@@ -258,12 +374,62 @@ export class HomeComponent implements OnInit {
   }
 
   onClickAddEventType() {
-    console.log("Se agrego un tipo de evento")
+    if (this.formCreatedEventType.valid) {
+      const formValue = this.formCreatedEventType.getRawValue()
+
+      const newTypeEvent: TypeEvent = {
+        nombre: formValue.eventTypeName,
+        descripcion: formValue.eventTypeDescription,
+        vigente: true, // asumimos que todo nuevo tipo de evento es vigente por defecto
+      }
+
+      this.eventService.createTypeEvent(newTypeEvent).subscribe({
+        next: (response) => {
+          console.log("Tipo de evento creado:", response.data)
+          this.formCreatedEventType.reset() // limpia el formulario
+          this.isVisibleFormEventType = false // oculta el modal
+        },
+        error: (err) => {
+          console.error("Error al crear el tipo de evento:", err)
+        },
+      })
+    } else {
+      console.error("Formulario de tipo de evento inválido")
+    }
   }
 
   onClickCancelForm() {
     this.isVisibleFormEventType = false
     this.titleModalCreateEvent = "Crear Evento"
+  }
+
+  onChangeSelectModality(modeId: string) {
+    const mode = Number(modeId) as typeModeEventEnum
+    console.log("Modalidad seleccionada:", mode)
+
+    const modeCtrl = this.formCreatedEvent.get(
+      "eventSelectedModeEvent",
+    ) as FormControl<typeModeEventEnum>
+
+    if (modeCtrl) {
+      modeCtrl.setValue(mode)
+
+      this.showLocationField =
+        mode === typeModeEventEnum.PRESENCIAL ||
+        mode === typeModeEventEnum.HIBRIDO
+
+      this.showLinkField =
+        mode === typeModeEventEnum.VIRTUAL || mode === typeModeEventEnum.HIBRIDO
+
+      const locationCtrl = this.formCreatedEvent.get(
+        "eventLocation",
+      ) as FormControl<string>
+
+      if (locationCtrl) {
+        this.updateLocationValidators(mode, locationCtrl)
+        locationCtrl.updateValueAndValidity()
+      }
+    }
   }
 
   ngOnInit(): void {
@@ -282,12 +448,30 @@ export class HomeComponent implements OnInit {
 
     // Validación inicial
     this.updateLocationValidators(modeCtrl.value, locationCtrl)
+
+    this.eventService.getAllTypeEvents().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.eventTypeOptions = response.data.map((eventType) => ({
+            id: eventType.id ?? 0,
+            nombre: eventType.nombre,
+          }))
+          this.eventType = this.eventTypeOptions.map((type) => ({
+            id: type.id,
+            nombre: type.nombre,
+          }))
+        }
+      },
+      error: (err) => {
+        console.error("Error al cargar tipos de eventos", err)
+      },
+    })
   }
   private updateLocationValidators(
     mode: typeModeEventEnum,
     control: FormControl<string>,
   ): void {
-    if (mode === typeModeEventEnum.REMOTO) {
+    if (mode === typeModeEventEnum.VIRTUAL) {
       control.clearValidators()
     } else {
       control.setValidators(Validators.required)
@@ -295,13 +479,8 @@ export class HomeComponent implements OnInit {
     control.updateValueAndValidity()
   }
 
-  get showLocationField(): boolean {
-    const mode = this.formCreatedEvent.get("eventSelectedModeEvent")?.value
-    return (
-      mode === typeModeEventEnum.PRESENCIAL ||
-      mode === typeModeEventEnum.HIBRIDO
-    )
-  }
+  showLocationField = true
+  showLinkField = false
 
   getErrorMessage(control: string): string {
     const formControl = this.formCreatedEvent.get(control)
@@ -519,14 +698,16 @@ export class HomeComponent implements OnInit {
     this.searchQuery = ""
   }
 
+  editingRowId: number | null = null
+
   onRowEditInit(data: DataItem) {
     this.clonedData[data.id] = { ...data }
-    this.isEditing = true
+    this.editingRowId = data.id
   }
 
   onRowEditSave(data: DataItem) {
     delete this.clonedData[data.id]
-    this.isEditing = false
+    this.editingRowId = null
     this.addMessage("success", `Se ha modificado la fila N° ${data.id}`)
   }
 
@@ -536,7 +717,7 @@ export class HomeComponent implements OnInit {
       this.data[ri] = original
       delete this.clonedData[data.id]
     }
-    this.isEditing = false
+    this.editingRowId = null
     this.addMessage(
       "info",
       `Se canceló la modificación de la fila N° ${data.id}`,
@@ -586,142 +767,43 @@ export class HomeComponent implements OnInit {
     "HORAS",
     "TIPO DE EVENTO",
     "LOCACIÓN",
+    "LINK",
     "ACCIONES",
   ]
-  protected dataEvents: DataSeeAllEvent[] = [
-    {
-      id: 1,
-      eventName: "Capacitación de Angular",
-      eventStartDate: "2023-10-01",
-      eventEndDate: "2023-10-01",
-      eventMode: typeModeEventEnum.PRESENCIAL,
-      eventHours: "8 horas",
-      eventType: "Capacitación",
-      eventLocation: "Lima",
-      actions: "actions",
-    },
-    {
-      id: 2,
-      eventName: "Capacitación de React",
-      eventStartDate: "2023-10-02",
-      eventEndDate: "2023-10-02",
-      eventMode: typeModeEventEnum.HIBRIDO,
-      eventHours: "8 horas",
-      eventType: "Capacitación",
-      eventLocation: "Lima",
-      actions: "actions",
-    },
-    {
-      id: 3,
-      eventName: "Seminario de Ciberseguridad",
-      eventStartDate: "2023-10-05",
-      eventEndDate: "2023-10-05",
-      eventMode: typeModeEventEnum.PRESENCIAL,
-      eventHours: "6 horas",
-      eventType: "Seminario",
-      eventLocation: "Trujillo",
-      actions: "actions",
-    },
-    {
-      id: 4,
-      eventName: "Taller de UX/UI",
-      eventStartDate: "2023-10-07",
-      eventEndDate: "2023-10-07",
-      eventMode: typeModeEventEnum.REMOTO,
-      eventHours: "4 horas",
-      eventType: "Taller",
-      eventLocation: "N/A",
-      actions: "actions",
-    },
-    {
-      id: 5,
-      eventName: "Charla sobre Inteligencia Artificial",
-      eventStartDate: "2023-10-10",
-      eventEndDate: "2023-10-10",
-      eventMode: typeModeEventEnum.REMOTO,
-      eventHours: "3 horas",
-      eventType: "Charla",
-      eventLocation: "N/A",
-      actions: "actions",
-    },
-    {
-      id: 6,
-      eventName: "Capacitación de Docker",
-      eventStartDate: "2023-10-12",
-      eventEndDate: "2023-10-12",
-      eventMode: typeModeEventEnum.PRESENCIAL,
-      eventHours: "7 horas",
-      eventType: "Capacitación",
-      eventLocation: "Arequipa",
-      actions: "actions",
-    },
-    {
-      id: 7,
-      eventName: "Curso de Git y GitHub",
-      eventStartDate: "2023-10-15",
-      eventEndDate: "2023-10-16",
-      eventMode: typeModeEventEnum.REMOTO,
-      eventHours: "10 horas",
-      eventType: "Curso",
-      eventLocation: "N/A",
-      actions: "actions",
-    },
-    {
-      id: 8,
-      eventName: "Workshop de Microservicios",
-      eventStartDate: "2023-10-18",
-      eventEndDate: "2023-10-18",
-      eventMode: typeModeEventEnum.PRESENCIAL,
-      eventHours: "5 horas",
-      eventType: "Workshop",
-      eventLocation: "Lima",
-      actions: "actions",
-    },
-    {
-      id: 9,
-      eventName: "Webinar de Transformación Digital",
-      eventStartDate: "2023-10-20",
-      eventEndDate: "2023-10-20",
-      eventMode: typeModeEventEnum.REMOTO,
-      eventHours: "2 horas",
-      eventType: "Webinar",
-      eventLocation: "N/A",
-      actions: "actions",
-    },
-    {
-      id: 10,
-      eventName: "Curso de Scrum y Agile",
-      eventStartDate: "2023-10-22",
-      eventEndDate: "2023-10-23",
-      eventMode: typeModeEventEnum.PRESENCIAL,
-      eventHours: "12 horas",
-      eventType: "Curso",
-      eventLocation: "Cusco",
-      actions: "actions",
-    },
-    {
-      id: 11,
-      eventName: "Simposio de Ciencia de Datos",
-      eventStartDate: "2023-10-25",
-      eventEndDate: "2023-10-25",
-      eventMode: typeModeEventEnum.REMOTO,
-      eventHours: "8 horas",
-      eventType: "Simposio",
-      eventLocation: "N/A",
-      actions: "actions",
-    },
-    {
-      id: 12,
-      eventName: "Foro de Innovación Tecnológica",
-      eventStartDate: "2023-10-28",
-      eventEndDate: "2023-10-28",
-      eventMode: typeModeEventEnum.PRESENCIAL,
-      eventHours: "6 horas",
-      eventType: "Foro",
-      eventLocation: "Chiclayo",
-      actions: "actions",
-    },
-  ]
+  protected dataEvents!: DataSeeAllEvent[]
+  totalRecords: number = 0
+
+  loadEvents(event: TableLazyLoadEvent): void {
+    const page = (event.first ?? 0) / (event.rows ?? 7)
+    const size = event.rows ?? 7
+
+    this.eventService.getEventosPaginados(page, size).subscribe({
+      next: (response) => {
+        this.dataEvents = (response.data ?? []).map((e, index) => ({
+          id: index + 1 + page * size,
+          eventName: e.nombre,
+          eventStartDate: e.fechaInicio,
+          eventEndDate: e.fechaFin,
+          eventMode:
+            e.idModalidad == "PRESENCIAL"
+              ? typeModeEventEnum.PRESENCIAL
+              : e.idModalidad == "VIRTUAL"
+                ? typeModeEventEnum.VIRTUAL
+                : typeModeEventEnum.HIBRIDO,
+          eventHours: `${e.duracion} horas`,
+          eventType: e.tipoEvento,
+          eventLocation: e.lugar ?? "N/A",
+          eventURL: e.enlaceEvento ?? "N/A",
+          actions: "acciones",
+        }))
+        this.totalRecords = response.totalElements ?? 0
+      },
+      error: (err) => {
+        console.error("Error al cargar eventos", err)
+      },
+    })
+  }
+
   protected searchQueryEvent: string = ""
 
   rowStyleAllEvent(data: DataSeeAllEvent): Record<string, string> {
@@ -733,7 +815,7 @@ export class HomeComponent implements OnInit {
           "font-weight": "bold",
           "border-left": "4px solid #388E3C",
         }
-      case typeModeEventEnum.REMOTO:
+      case typeModeEventEnum.VIRTUAL:
         return {
           "background-color": "#E1BEE7",
           color: "#6A1B9A",
@@ -750,28 +832,24 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  protected eventModeOptions: typeModeEventEnum[] = [
-    typeModeEventEnum.PRESENCIAL,
-    typeModeEventEnum.REMOTO,
-    typeModeEventEnum.HIBRIDO,
+  protected eventModeOptions = [
+    { label: "PRESENCIAL", value: 1 },
+    { label: "VIRTUAL", value: 2 },
+    { label: "HIBRIDO", value: 3 },
   ]
 
-  protected eventTypeOptions: string[] = [
-    "Capacitación",
-    "Taller",
-    "Curso",
-    "Seminario",
-    "Conferencia",
-  ]
+  protected eventTypeOptions: KeyValueTypeEvent[] = []
+
+  editingRowEventId: number | null = null
 
   onRowEditInitEvent(data: DataSeeAllEvent) {
     this.clonedDataEvent[data.id] = { ...data }
-    this.isEditingEvent = true
+    this.editingRowEventId = data.id // Cambiado de isEditingEvent a editingRowId
   }
 
   onRowEditSaveEvent(data: DataSeeAllEvent) {
     delete this.clonedDataEvent[data.id]
-    this.isEditingEvent = false
+    this.editingRowEventId = null // Salimos del modo edición para esta fila
     this.addMessage("success", `Se ha modificado la fila N° ${data.id}`)
   }
 
@@ -781,13 +859,12 @@ export class HomeComponent implements OnInit {
       this.dataEvents[ri] = original
       delete this.clonedDataEvent[data.id]
     }
-    this.isEditingEvent = false
+    this.editingRowEventId = null // Salimos del modo edición
     this.addMessage(
       "info",
       `Se canceló la modificación de la fila N° ${data.id}`,
     )
   }
-
   clonedDataEvent: { [id: number]: DataSeeAllEvent } = {}
 
   onClickSeeAllEvents() {

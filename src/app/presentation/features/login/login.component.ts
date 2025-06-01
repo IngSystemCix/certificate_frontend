@@ -1,11 +1,14 @@
 import {
   Component,
   ElementRef,
+  inject,
   OnDestroy,
   QueryList,
   ViewChildren,
 } from "@angular/core"
 import { Message } from "primeng/message"
+import { AuthService } from "../../../core/infrastructure"
+import { Router } from "@angular/router"
 
 @Component({
   selector: "app-login",
@@ -14,6 +17,8 @@ import { Message } from "primeng/message"
   styleUrl: "./login.component.css",
 })
 export class LoginComponent implements OnDestroy {
+  protected authService: AuthService = inject(AuthService)
+  protected router = inject(Router)
   protected yearNow: number = new Date().getFullYear()
   protected inputEmail: string = ""
   protected isButtonContinueDisabled: boolean = true
@@ -54,11 +59,27 @@ export class LoginComponent implements OnDestroy {
     if (this.isButtonContinueDisabled) {
       return
     }
-    this.inputEmail = email
-    this.isShowViewFormEmail = false
-    this.startCountdown()
-    this.step = 2
-    this.isMessageSuccess = true
+
+    this.authService.sendCodeValidation(email).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.inputEmail = email
+          this.isShowViewFormEmail = false
+          this.startCountdown()
+          this.step = 2
+          this.isMessageSuccess = true
+          // Puedes mostrar aquí el mensaje que viene en response.message
+          console.log(response.message)
+        } else {
+          // Aquí podrías manejar errores, mostrar alertas, etc.
+          console.error("Error:", response.message)
+        }
+      },
+      error: (err) => {
+        // Manejo de error HTTP o conexión
+        console.error("Error en la petición:", err)
+      },
+    })
   }
 
   onChangeCode(input: HTMLInputElement, index: number): void {
@@ -102,24 +123,67 @@ export class LoginComponent implements OnDestroy {
   }
 
   onClickResendCode(): void {
-    this.timeResendCode = 30
-    this.isMessageInfo = true
-    this.startCountdown()
+    if (!this.inputEmail) {
+      console.warn("No email stored to resend code.")
+      return
+    }
+
+    this.authService.sendCodeValidation(this.inputEmail).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.timeResendCode = 30
+          this.isMessageInfo = true
+          this.startCountdown()
+          console.log(response.message)
+        } else {
+          console.error("Error:", response.message)
+          this.isMessageInfo = false
+        }
+      },
+      error: (err) => {
+        console.error("Error en la petición:", err)
+        this.isMessageInfo = false
+      },
+    })
   }
 
   onSubmitAuth(event: Event): void {
+    event.preventDefault()
+
     if (this.inputEmail.length === 0) {
-      event.preventDefault()
+      console.warn("Email requerido")
       return
     }
 
     if (this.step === 2) {
       const code = this.codeDigits.join("")
+
       if (code.length !== 6) {
-        event.preventDefault()
+        console.warn("Código incompleto")
         return
       }
+
       console.log("Verificando cuenta con código:", code)
+
+      this.authService.login(this.inputEmail, code).subscribe({
+        next: (response) => {
+          if (response.success) {
+            const { accessToken, refreshToken } = response.data
+
+            // ✅ Aquí puedes guardar los tokens localmente
+            localStorage.setItem("accessToken", accessToken)
+            localStorage.setItem("refreshToken", refreshToken)
+
+            // 🔄 Redirigir o cambiar de vista si es necesario
+            this.router.navigate(["/home"])
+          } else {
+            this.router.navigate(["/"])
+          }
+        },
+        error: (err) => {
+          console.error("Error al iniciar sesión:", err)
+        },
+      })
     }
   }
 

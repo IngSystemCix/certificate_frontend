@@ -6,20 +6,33 @@ import {
   AddUserComponent,
   CertificateComponent,
 } from "./presentation/features"
+import { authGuard, loginGuard } from "./core/infrastructure"
 
 export const routes: Routes = [
   { path: "", redirectTo: "login", pathMatch: "full" },
-  { path: "login", component: LoginComponent, title: "Certificate :: Login" },
-  { path: "home", component: HomeComponent, title: "Certificate :: Home" },
+  {
+    path: "login",
+    canActivate: [loginGuard],
+    component: LoginComponent,
+    title: "Certificate :: Login",
+  },
+  {
+    path: "home",
+    canActivate: [authGuard],
+    component: HomeComponent,
+    title: "Certificate :: Home",
+  },
   {
     path: "add-user",
+    canActivate: [authGuard],
     component: AddUserComponent,
     title: "Certificate :: Add User",
   },
   {
     path: "certificate",
+    canActivate: [authGuard],
     component: CertificateComponent,
-    title: "Certificate :: Certificate",
+    title: "Certificate",
   },
   { path: "**", redirectTo: "not-found" },
   {

@@ -25,13 +25,14 @@
     }
   </div>
   <div class="w-full flex items-center justify-center p-4">
-    <a
-      href="/logout"
-      class="flex items-center justify-start w-full h-full p-4 text-certificate-blue-600 hover:bg-gray-200 font-bold rounded-2xl"
+    <button
+      type="button"
+      (click)="handleLogout()"
+      class="flex items-center justify-start w-full h-full p-4 text-certificate-blue-600 hover:bg-gray-200 font-bold rounded-2xl cursor-pointer"
     >
       <i class="bi bi-box-arrow-right"></i>
       <span class="ml-2">Cerrar sesión</span>
-    </a>
+    </button>
   </div>
 </div>
 
