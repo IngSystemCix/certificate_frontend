@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http"
-import { inject, Injectable } from "@angular/core"
-import { environment } from "../../../../environments/environment"
+import { Injectable, inject } from "@angular/core"
 import { Observable } from "rxjs"
+import { environment } from "../../../../environments/environment"
 import { ApiResponse, Participant, Reniec } from "../../domain"
 
 @Injectable({
@@ -22,5 +22,15 @@ export class ParticipantService {
       `${this.apiUrlBase}/participante/create`,
       data,
     )
+  }
+
+  getParticipantByDni(
+    dni: string,
+  ): Observable<
+    ApiResponse<Omit<Participant, "numDocumento" | "idTipoDocumento">>
+  > {
+    return this.http.get<
+      ApiResponse<Omit<Participant, "numDocumento" | "idTipoDocumento">>
+    >(`${this.apiUrlBase}/participante/${dni}`)
   }
 }

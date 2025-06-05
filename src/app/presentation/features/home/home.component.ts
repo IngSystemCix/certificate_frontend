@@ -8,7 +8,9 @@ import {
   ReactiveFormsModule,
   Validators,
 } from "@angular/forms"
+import { ConfirmationService } from "primeng/api"
 import { ButtonModule } from "primeng/button"
+import { ConfirmDialog } from "primeng/confirmdialog"
 import { Dialog } from "primeng/dialog"
 import { Menu } from "primeng/menu"
 import { Message } from "primeng/message"
@@ -114,11 +116,14 @@ interface FormEventType {
     Dialog,
     ReactiveFormsModule,
     Message,
+    ConfirmDialog,
   ],
   templateUrl: "./home.component.html",
   styleUrl: "./home.component.css",
+  providers: [ConfirmationService],
 })
 export class HomeComponent implements OnInit {
+  protected confirmationService = inject(ConfirmationService)
   protected participantService = inject(ParticipantService)
   protected eventService = inject(EventService)
   protected titleModalCreateEvent: string = "Crear Evento"
@@ -149,11 +154,14 @@ export class HomeComponent implements OnInit {
 
   protected formCreatedEvent: FormGroup<FormCreateEventType> =
     this.fb.group<FormCreateEventType>({
-      eventName: this.fb.control(this.eventName, Validators.required),
-      eventDescription: this.fb.control(
-        this.eventDescription,
+      eventName: this.fb.control(this.eventName, [
         Validators.required,
-      ),
+        Validators.maxLength(60),
+      ]),
+      eventDescription: this.fb.control(this.eventDescription, [
+        Validators.required,
+        Validators.maxLength(150),
+      ]),
       eventStartDate: this.fb.control(this.eventStartDate, Validators.required),
       eventEndDate: this.fb.control(this.eventEndDate, Validators.required),
       eventHours: this.fb.control(this.eventHours, Validators.required),
@@ -202,6 +210,23 @@ export class HomeComponent implements OnInit {
       },
       error: (err) => {
         console.error("Error al crear el evento:", err)
+      },
+    })
+  }
+
+  confirmCreateEvent() {
+    this.confirmationService.confirm({
+      header: "Confirmación",
+      message: "¿Estás seguro de que deseas crear este evento?",
+      icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Aceptar",
+      rejectLabel: "Cancelar",
+      acceptVisible: false,
+      accept: () => {
+        this.onClickCreateEvent()
+      },
+      reject: () => {
+        this.addMessage("info", "Creación de evento cancelada")
       },
     })
   }
@@ -276,6 +301,33 @@ export class HomeComponent implements OnInit {
       },
       error: (err) => {
         console.error("Error al buscar datos del participante:", err)
+      },
+    })
+  }
+
+  onClickSearchParticipantEmmitCertificate() {
+    const dni = this.formEmitCertificate
+      .get("emitNumberDocument")
+      ?.value?.trim()
+
+    if (!dni || dni.length !== 8 || !/^\d{8}$/.test(dni)) {
+      console.error("DNI inválido. Debe contener 8 dígitos numéricos.")
+      return
+    }
+
+    this.participantService.getParticipantByDni(dni).subscribe({
+      next: (response) => {
+        const data = response.data
+        this.formEmitCertificate.patchValue({
+          emitTypeDocument: this.participantTypeDocument,
+          emitNumberDocument: dni,
+          emitSelectedTypeEvent: "",
+          emitParticipantNote: 0,
+        })
+        this.emitFullName = `${data.nombre} ${data.apellidoPat} ${data.apellidoMat}`
+      },
+      error: (_err) => {
+        this.confirmationNoExistParticipant()
       },
     })
   }
@@ -388,6 +440,7 @@ export class HomeComponent implements OnInit {
           console.log("Tipo de evento creado:", response.data)
           this.formCreatedEventType.reset() // limpia el formulario
           this.isVisibleFormEventType = false // oculta el modal
+          this.loadTypeEvents()
         },
         error: (err) => {
           console.error("Error al crear el tipo de evento:", err)
@@ -396,6 +449,40 @@ export class HomeComponent implements OnInit {
     } else {
       console.error("Formulario de tipo de evento inválido")
     }
+  }
+
+  confirmAddNewTypeEvent() {
+    this.confirmationService.confirm({
+      header: "Confirmación",
+      message: "¿Estás seguro de que deseas crear un nuevo tipo de evento?",
+      icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Aceptar",
+      rejectLabel: "Cancelar",
+      acceptVisible: false,
+      accept: () => {
+        this.onClickAddEventType()
+      },
+      reject: () => {
+        this.addMessage("info", "Creación de tipo de evento cancelada")
+      },
+    })
+  }
+
+  confirmationNoExistParticipant() {
+    this.confirmationService.confirm({
+      header: "Información",
+      icon: "pi pi-exclamation-triangle",
+      message: "El participante no existe.",
+      acceptLabel: "Aceptar",
+      rejectLabel: "Cancelar",
+      acceptVisible: true,
+      accept: () => {
+        this.addMessage("info", "Continuando con la emisión del certificado")
+      },
+      reject: () => {
+        this.addMessage("info", "Creación de participante cancelada")
+      },
+    })
   }
 
   onClickCancelForm() {
@@ -446,9 +533,46 @@ export class HomeComponent implements OnInit {
       this.updateLocationValidators(mode, locationCtrl)
     })
 
+    this.formCreatedEvent.get("eventStartDate")?.valueChanges.subscribe(() => {
+      this.updateHours()
+    })
+    this.formCreatedEvent.get("eventEndDate")?.valueChanges.subscribe(() => {
+      this.updateHours()
+    })
     // Validación inicial
     this.updateLocationValidators(modeCtrl.value, locationCtrl)
 
+    this.loadTypeEvents()
+  }
+
+  updateHours() {
+    const start = this.formCreatedEvent.get("eventStartDate")?.value
+    const end = this.formCreatedEvent.get("eventEndDate")?.value
+
+    if (start && end) {
+      const startDate = new Date(start)
+      const endDate = new Date(end)
+
+      if (endDate >= startDate) {
+        const diffMs = endDate.getTime() - startDate.getTime()
+        const diffHours = diffMs / (1000 * 60 * 60) // ms a horas
+        this.formCreatedEvent
+          .get("eventHours")
+          ?.setValue(diffHours.toFixed(2), { emitEvent: false })
+      } else {
+        // Si la fecha fin es anterior, poner 0 o vaciar horas
+        this.formCreatedEvent
+          .get("eventHours")
+          ?.setValue("", { emitEvent: false })
+      }
+    } else {
+      this.formCreatedEvent
+        .get("eventHours")
+        ?.setValue("", { emitEvent: false })
+    }
+  }
+
+  loadTypeEvents() {
     this.eventService.getAllTypeEvents().subscribe({
       next: (response) => {
         if (response.success) {
@@ -467,6 +591,7 @@ export class HomeComponent implements OnInit {
       },
     })
   }
+
   private updateLocationValidators(
     mode: typeModeEventEnum,
     control: FormControl<string>,
@@ -664,24 +789,24 @@ export class HomeComponent implements OnInit {
     switch (data.status) {
       case statusEnum.EMITIDO:
         return {
-          "background-color": "#B0EBB4",
-          color: "#1B5E20",
+          "background-color": "#E0F8E9", // verde pastel
+          color: "#2E7D32", // verde más suave
           "font-weight": "bold",
-          "border-left": "4px solid #388E3C",
+          "border-left": "4px solid #81C784", // verde tenue
         }
       case statusEnum.REEMITIDO:
         return {
-          "background-color": "#A7C5EB",
-          color: "#0D47A1",
+          "background-color": "#E3F2FD", // azul pastel
+          color: "#1565C0", // azul moderado
           "font-weight": "bold",
-          "border-left": "4px solid #1976D2",
+          "border-left": "4px solid #64B5F6", // azul claro
         }
       default:
         return {
-          "background-color": "#F38BA0",
-          color: "#B71C1C",
+          "background-color": "#FDECEA", // rojo pastel
+          color: "#C62828", // rojo más contenido
           "font-weight": "bold",
-          "border-left": "4px solid #D32F2F",
+          "border-left": "4px solid #EF9A9A", // rojo claro
         }
     }
   }
@@ -779,15 +904,19 @@ export class HomeComponent implements OnInit {
 
     this.eventService.getEventosPaginados(page, size).subscribe({
       next: (response) => {
+        const pagination = response.additional?.pagination
         this.dataEvents = (response.data ?? []).map((e, index) => ({
-          id: index + 1 + page * size,
+          id:
+            index +
+            1 +
+            (pagination?.pageNumber ?? 0) * (pagination?.size ?? 10),
           eventName: e.nombre,
           eventStartDate: e.fechaInicio,
           eventEndDate: e.fechaFin,
           eventMode:
-            e.idModalidad == "PRESENCIAL"
+            e.idModalidad === "PRESENCIAL"
               ? typeModeEventEnum.PRESENCIAL
-              : e.idModalidad == "VIRTUAL"
+              : e.idModalidad === "VIRTUAL"
                 ? typeModeEventEnum.VIRTUAL
                 : typeModeEventEnum.HIBRIDO,
           eventHours: `${e.duracion} horas`,
@@ -796,7 +925,7 @@ export class HomeComponent implements OnInit {
           eventURL: e.enlaceEvento ?? "N/A",
           actions: "acciones",
         }))
-        this.totalRecords = response.totalElements ?? 0
+        this.totalRecords = pagination?.totalElements ?? 0
       },
       error: (err) => {
         console.error("Error al cargar eventos", err)
@@ -810,24 +939,24 @@ export class HomeComponent implements OnInit {
     switch (data.eventMode) {
       case typeModeEventEnum.PRESENCIAL:
         return {
-          "background-color": "#B0EBB4",
-          color: "#1B5E20",
+          "background-color": "#E0F8E9", // verde pastel
+          color: "#2E7D32", // verde medio
           "font-weight": "bold",
-          "border-left": "4px solid #388E3C",
+          "border-left": "4px solid #A5D6A7", // borde verde suave
         }
       case typeModeEventEnum.VIRTUAL:
         return {
-          "background-color": "#E1BEE7",
-          color: "#6A1B9A",
+          "background-color": "#F3E5F5", // lila pastel
+          color: "#7B1FA2", // púrpura moderado
           "font-weight": "bold",
-          "border-left": "4px solid #8E24AA",
+          "border-left": "4px solid #CE93D8", // borde lila suave
         }
       default:
         return {
-          "background-color": "#FFF9C4",
-          color: "#F57F17",
+          "background-color": "#FFFDE7", // amarillo pastel
+          color: "#F9A825", // amarillo anaranjado suave
           "font-weight": "bold",
-          "border-left": "4px solid #FBC02D",
+          "border-left": "4px solid #FFE082", // borde amarillo suave
         }
     }
   }
@@ -879,10 +1008,69 @@ export class HomeComponent implements OnInit {
 
   cleanSearchEvent() {
     this.searchQueryEvent = ""
+    this.eventService.searchEventByName("").subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.dataEvents = response.data.map((e, index) => ({
+            id: index + 1,
+            eventName: e.nombre,
+            eventStartDate: e.fechaInicio,
+            eventEndDate: e.fechaFin,
+            eventMode:
+              e.idModalidad == "PRESENCIAL"
+                ? typeModeEventEnum.PRESENCIAL
+                : e.idModalidad == "VIRTUAL"
+                  ? typeModeEventEnum.VIRTUAL
+                  : typeModeEventEnum.HIBRIDO,
+            eventHours: `${e.duracion} horas`,
+            eventType: e.tipoEvento,
+            eventLocation: e.lugar ?? "N/A",
+            eventURL: e.enlaceEvento ?? "N/A",
+            actions: "acciones",
+          }))
+        } else {
+          console.error("No se encontraron eventos")
+        }
+      },
+      error: (err) => {
+        console.error("Error al limpiar la búsqueda de eventos", err)
+      },
+    })
   }
 
   onClickSearchEvent() {
-    console.log("Se busco el evento")
+    if (!this.searchQueryEvent.trim()) {
+      console.error("La búsqueda no puede estar vacía")
+      return
+    }
+    this.eventService.searchEventByName(this.searchQueryEvent).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.dataEvents = response.data.map((e, index) => ({
+            id: index + 1,
+            eventName: e.nombre,
+            eventStartDate: e.fechaInicio,
+            eventEndDate: e.fechaFin,
+            eventMode:
+              e.idModalidad == "PRESENCIAL"
+                ? typeModeEventEnum.PRESENCIAL
+                : e.idModalidad == "VIRTUAL"
+                  ? typeModeEventEnum.VIRTUAL
+                  : typeModeEventEnum.HIBRIDO,
+            eventHours: `${e.duracion} horas`,
+            eventType: e.tipoEvento,
+            eventLocation: e.lugar ?? "N/A",
+            eventURL: e.enlaceEvento ?? "N/A",
+            actions: "acciones",
+          }))
+        } else {
+          console.error("No se encontraron eventos con ese nombre")
+        }
+      },
+      error: (err) => {
+        console.error("Error al buscar eventos", err)
+      },
+    })
   }
 
   onClickCleanForm() {
@@ -892,5 +1080,12 @@ export class HomeComponent implements OnInit {
   getPercentageWithCells(header: string[]): string {
     const percentage = 100 / header.length
     return `${percentage}%`
+  }
+
+  onClickIssueCertificate() {
+    if (this.formEmitCertificate.invalid) {
+      this.formEmitCertificate.markAllAsTouched()
+      return
+    }
   }
 }

@@ -50,6 +50,8 @@ export class AddUserComponent {
   protected documentType: string = "DNI"
   protected documentNumber: string = ""
   protected userType: UserTypeEnum = UserTypeEnum.PERSONAL
+  protected isDisabledButtonSearchNumberDocument: boolean = true
+  protected isDisabledButtonSearchEmitNumberDocument: boolean = true
 
   protected selectDocumentType: SelectDocumentType[] = [
     { label: "DNI", value: "DNI" },
@@ -124,5 +126,49 @@ export class AddUserComponent {
         console.error("❌ Error al crear usuario:", err)
       },
     })
+  }
+
+  onClickSearchParticipant() {
+    const dni = this.formAddUser.get("documentNumber")?.value?.trim()
+
+    if (!dni || dni.length !== 8 || !/^\d{8}$/.test(dni)) {
+      console.error("DNI inválido. Debe contener 8 dígitos numéricos.")
+      return
+    }
+
+    this.participantService.getDataPerson(dni).subscribe({
+      next: (response) => {
+        const data = response.data
+        this.formAddUser.patchValue({
+          name: data.nombres ?? "",
+          paternalSurname: data.apellidoPaterno ?? "",
+          maternalSurname: data.apellidoMaterno ?? "",
+          email: "",
+        })
+      },
+      error: (err) => {
+        console.error("Error al buscar datos del participante:", err)
+      },
+    })
+  }
+
+  onChangeNumberDocument(form: FormGroup, input: string) {
+    const number = form.get(input)?.value
+    const type = this.formAddUser.get("documentType")?.value
+
+    if (form === this.formAddUser) {
+      if (type === "DNI" && number?.length === 8 && /^[0-9]+$/.test(number)) {
+        this.isDisabledButtonSearchNumberDocument = false
+      } else {
+        this.isDisabledButtonSearchNumberDocument = true
+      }
+    }
+    if (form === this.formAddUser) {
+      if (type === "DNI" && number?.length === 8 && /^[0-9]+$/.test(number)) {
+        this.isDisabledButtonSearchEmitNumberDocument = false
+      } else {
+        this.isDisabledButtonSearchEmitNumberDocument = true
+      }
+    }
   }
 }

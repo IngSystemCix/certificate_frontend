@@ -44,3 +44,4 @@ Thumbs.db
 # Enviroment files
 src/environments/environment.ts
 src/environments/environment.development.ts
+public/assets/firma.png

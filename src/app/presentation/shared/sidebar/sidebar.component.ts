@@ -47,7 +47,7 @@ export class SidebarComponent {
       role: ["PE", "AD"],
     },
     {
-      label: "Agregar Usuario",
+      label: "Persona",
       icon: "bi bi-person-plus",
       routerLink: "/add-user",
       role: ["AD"],

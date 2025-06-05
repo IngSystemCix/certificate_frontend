@@ -4,6 +4,13 @@ export interface ApiResponse<T> {
   message: string
   status: number
   timestamp: string
-  additionalInfo?: Record<string, object>
-  totalElements?: number
+  additional?: {
+    pagination?: {
+      totalElements: number
+      totalPages: number
+      size: number
+      pageNumber: number
+    }
+    [key: string]: unknown
+  }
 }

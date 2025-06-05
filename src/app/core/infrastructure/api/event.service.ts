@@ -1,4 +1,4 @@
-import { HttpClient } from "@angular/common/http"
+import { HttpClient, HttpParams } from "@angular/common/http"
 import { inject, Injectable } from "@angular/core"
 import { environment } from "../../../../environments/environment"
 import { ApiResponse, EventData, EventDataTable, TypeEvent } from "../../domain"
@@ -37,6 +37,14 @@ export class EventService {
   ): Observable<ApiResponse<EventDataTable[]>> {
     return this.http.get<ApiResponse<EventDataTable[]>>(
       `${this.apiUrlBase}/evento/all?page=${page}&size=${size}`,
+    )
+  }
+
+  searchEventByName(name: string): Observable<ApiResponse<EventDataTable[]>> {
+    const params = new HttpParams().set("nombre", name)
+    return this.http.get<ApiResponse<EventDataTable[]>>(
+      `${this.apiUrlBase}/evento/search`,
+      { params },
     )
   }
 }

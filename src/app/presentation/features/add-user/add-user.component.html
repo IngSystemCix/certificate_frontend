@@ -5,7 +5,7 @@
   <div class="flex-grow p-6 overflow-auto">
     <div class="flex flex-col items-start justify-center space-y-4 w-full">
       <h1 class="text-4xl font-bold text-certificate-blue-600">
-        Agregar nuevo usuario
+        Agregar nueva persona
       </h1>
     </div>
     <div class="w-full flex items-center justify-center space-x-4 mt-4">
@@ -45,13 +45,24 @@
           <span class="text-2xl font-bold text-certificate-blue-600">
             Número de documento
           </span>
-          <input
-            type="text"
-            name="documentNumber"
-            formControlName="documentNumber"
-            class="input-normal p-3"
-            required
-          />
+          <div class="w-full flex items-center justify-between space-x-2">
+            <input
+              type="text"
+              name="documentNumber"
+              formControlName="documentNumber"
+              class="input-normal p-3"
+              (input)="onChangeNumberDocument(formAddUser, 'documentNumber')"
+              required
+            />
+            <button
+              type="button"
+              class="button-normal w-auto px-3 py-2 text-2xl"
+              (click)="onClickSearchParticipant()"
+              [disabled]="isDisabledButtonSearchNumberDocument"
+            >
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
           @if (
             formAddUser.get("documentNumber")?.invalid &&
             formAddUser.get("documentNumber")?.touched
@@ -73,6 +84,7 @@
             formControlName="name"
             class="input-normal p-3"
             required
+            readonly
           />
           @if (
             formAddUser.get("name")?.invalid && formAddUser.get("name")?.touched
@@ -94,6 +106,7 @@
             formControlName="paternalSurname"
             class="input-normal p-3"
             required
+            readonly
           />
           @if (
             formAddUser.get("lastName")?.invalid &&
@@ -116,6 +129,7 @@
             formControlName="maternalSurname"
             class="input-normal p-3"
             required
+            readonly
           />
           @if (
             formAddUser.get("maternalSurname")?.invalid &&

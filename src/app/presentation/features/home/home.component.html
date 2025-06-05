@@ -22,6 +22,44 @@
   [resizable]="false"
   maskStyleClass="backdrop-blur-sm"
 >
+  <p-confirmdialog #cd>
+    <ng-template
+      #headless
+      let-message
+      let-onAccept="onAccept"
+      let-onReject="onReject"
+    >
+      <div
+        class="flex flex-col items-center p-8 bg-surface-0 dark:bg-surface-900 rounded"
+      >
+        <div
+          class="rounded-full bg-certificate-blue-600 text-white flex justify-center items-center h-24 w-24 -mt-20"
+        >
+          <i [ngClass]="message.icon || 'pi pi-question'" class="!text-5xl"></i>
+        </div>
+        <span class="font-bold text-2xl block mb-2 mt-6">{{
+          message.header
+        }}</span>
+        <p class="mb-0">{{ message.message }}</p>
+        <div class="flex items-center gap-2 mt-6">
+          @if (!message.acceptVisible) {
+            <p-button
+              label="{{ message.acceptLabel || 'Aceptar' }}"
+              (onClick)="onAccept()"
+              styleClass="w-32"
+            ></p-button>
+          }
+          <p-button
+            label="{{ message.rejectLabel || 'Cancelar' }}"
+            [outlined]="true"
+            (onClick)="onReject()"
+            styleClass="w-32"
+          ></p-button>
+        </div>
+      </div>
+    </ng-template>
+  </p-confirmdialog>
+
   @if (!isVisibleFormEventType && !isVisibleTableSeeAllEvents) {
     <div
       class="flex items-center justify-end space-x-4 border-b-2 border-certificate-blue-600 pb-4"
@@ -58,15 +96,22 @@
             formControlName="eventName"
             class="input-normal p-3"
             placeholder="Nombre del evento"
+            maxlength="60"
           />
-          @if (
-            formCreatedEvent.get("eventName")?.invalid &&
-            formCreatedEvent.get("eventName")?.touched
-          ) {
-            <span class="text-red-500 text-sm font-bold min-h-6">
-              {{ getErrorMessage("eventName") }}
-            </span>
-          }
+          <div class="w-full flex justify-between">
+            @if (
+              formCreatedEvent.get("eventName")?.invalid &&
+              formCreatedEvent.get("eventName")?.touched
+            ) {
+              <span class="text-red-500 text-sm font-bold min-h-6">
+                {{ getErrorMessage("eventName") }}
+              </span>
+            }
+            <small class="text-gray-500">
+              {{ formCreatedEvent.get("eventName")?.value?.length || 0 }}/60
+              caracteres
+            </small>
+          </div>
         </label>
         <label
           class="w-full col-span-1 md:col-span-2 flex flex-col items-start justify-center space-y-2"
@@ -78,15 +123,24 @@
             formControlName="eventDescription"
             class="input-normal h-48 p-3 resize-none"
             placeholder="Descripción del evento"
+            maxlength="150"
           ></textarea>
-          @if (
-            formCreatedEvent.get("eventDescription")?.invalid &&
-            formCreatedEvent.get("eventDescription")?.touched
-          ) {
-            <span class="text-red-500 text-sm font-bold min-h-6">
-              {{ getErrorMessage("eventDescription") }}
-            </span>
-          }
+
+          <div class="w-full flex justify-between">
+            @if (
+              formCreatedEvent.get("eventDescription")?.invalid &&
+              formCreatedEvent.get("eventDescription")?.touched
+            ) {
+              <span class="text-red-500 text-sm font-bold min-h-6 text-nowrap">
+                {{ getErrorMessage("eventDescription") }}
+              </span>
+            }
+            <small class="text-gray-500 w-full flex justify-end">
+              {{
+                formCreatedEvent.get("eventDescription")?.value?.length || 0
+              }}/150 caracteres
+            </small>
+          </div>
         </label>
         <label
           class="w-full flex flex-col items-start justify-center space-y-2"
@@ -120,6 +174,7 @@
             formControlName="eventEndDate"
             class="input-normal p-3"
             placeholder="Fecha de fin"
+            [min]="formCreatedEvent.get('eventStartDate')?.value"
           />
           @if (
             formCreatedEvent.get("eventEndDate")?.invalid &&
@@ -143,6 +198,7 @@
             formControlName="eventHours"
             class="input-normal p-3"
             placeholder="Número de horas"
+            readonly
           />
           @if (
             formCreatedEvent.get("eventHours")?.invalid &&
@@ -274,7 +330,7 @@
         >
           <button
             type="submit"
-            (click)="onClickCreateEvent()"
+            (click)="confirmCreateEvent()"
             class="button-normal w-full px-6 py-3 flex items-center justify-center text-lg"
             [disabled]="formCreatedEvent.invalid"
           >
@@ -331,7 +387,7 @@
         <button
           type="button"
           class="button-normal w-auto px-3 py-2 text-2xl"
-          (click)="onClickAddEventType()"
+          (click)="confirmAddNewTypeEvent()"
           [disabled]="formCreatedEventType.invalid"
         >
           <i class="bi bi-plus"></i>
@@ -480,9 +536,17 @@
             class="overflow-hidden"
           >
             <td>{{ data.id }}</td>
-            <td>{{ data.eventName }}</td>
-            <td>{{ data.eventStartDate | date: "dd/MM/yyyy HH:mm" }}</td>
-            <td>{{ data.eventEndDate | date: "dd/MM/yyyy HH:mm" }}</td>
+            <td>
+              <p class="w-24 line-clamp-1" title="{{ data.eventName }}">
+                {{ data.eventName }}
+              </p>
+            </td>
+            <td class="text-nowrap">
+              {{ data.eventStartDate | date: "dd/MM/yyyy HH:mm" }}
+            </td>
+            <td class="text-nowrap">
+              {{ data.eventEndDate | date: "dd/MM/yyyy HH:mm" }}
+            </td>
             <td>
               <p-cellEditor>
                 <ng-template #input>
@@ -498,7 +562,7 @@
                 </ng-template>
               </p-cellEditor>
             </td>
-            <td>{{ data.eventHours }}</td>
+            <td class="text-nowrap">{{ data.eventHours }}</td>
             <td>
               <p-cellEditor>
                 <ng-template #input>
@@ -512,12 +576,25 @@
                   />
                 </ng-template>
                 <ng-template #output>
-                  {{ data.eventType }}
+                  <p class="w-24 line-clamp-1" title="{{ data.eventType }}">
+                    {{ data.eventType }}
+                  </p>
                 </ng-template>
               </p-cellEditor>
             </td>
-            <td>{{ data.eventLocation }}</td>
-            <td>{{ data.eventURL }}</td>
+            <td>
+              <p class="w-24 line-clamp-1" title="{{ data.eventLocation }}">
+                {{ data.eventLocation }}
+              </p>
+            </td>
+            <td>
+              <a
+                href="{{ data.eventURL }}"
+                class="w-32 line-clamp-1"
+                title="{{ data.eventURL }}<"
+                >{{ data.eventURL }}</a
+              >
+            </td>
             <td>
               <div class="flex items-center justify-center space-x-2">
                 @if (editingRowEventId !== data.id) {
@@ -562,7 +639,7 @@
         <ng-template #emptymessage>
           <tr style="height: 30rem">
             <td
-              colspan="8"
+              colspan="10"
               class="text-center text-certificate-blue-200 text-xl"
             >
               No se encontraron resultados
@@ -771,7 +848,7 @@
         <button
           type="button"
           class="button-normal w-auto px-3 py-2 text-2xl"
-          (click)="onClickSearchParticipant()"
+          (click)="onClickSearchParticipantEmmitCertificate()"
           [disabled]="isDisabledButtonSearchEmitNumberDocument"
         >
           <i class="bi bi-search"></i>
@@ -809,7 +886,7 @@
         placeholder="Tipo de evento"
       >
         @for (type of eventType; track type) {
-          <option [value]="type">{{ type }}</option>
+          <option [value]="type.id">{{ type.nombre }}</option>
         }
       </select>
       @if (
@@ -847,6 +924,7 @@
       type="submit"
       class="button-normal w-full px-6 py-3 flex items-center justify-center text-lg col-span-1 md:col-span-2"
       [disabled]="formEmitCertificate.invalid"
+      (click)="onClickIssueCertificate()"
     >
       <i class="bi bi-plus mr-2"></i>
       <span>Emitir certificado</span>
